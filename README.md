@@ -39,10 +39,30 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 ### Birthday List
 ![Gradsquad Birthday List](assets/birthday.png)
 
+### Event Planning## 📸 Screenshots
+
+### Home Page
+![Gradsquad Home](assets/home.png)
+
+### Dashboard
+![Gradsquad Dashboard](assets/dashboard.png)
+
+### Calendar
+![Gradsquad Calendar](assets/calendar.png)
+
+### Photos
+![Gradsquad Photos](assets/photos.png)
+
+### Chat
+![Gradsquad Chat](assets/chat.png)
+
+### Birthday List
+![Gradsquad Birthday](assets/birthday.png)
+
 ### Event Planning
-![Gradsquad Event Planning](assets/planning.png)
+![Gradsquad Planning](assets/planning.png)
 
 ### Settings
-![Gradsquad Settings](assets/setings.png)
+![Gradsquad Settings](assets/settings.png)
 
 # Open with localhost or your preferred server
