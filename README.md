@@ -20,7 +20,6 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 - VS Code + GitHub for collaboration
 
 ## 📸 Screenshots
-Here’s a preview of Gradsquad so far:
 
 ### Home Page
 ![Gradsquad Home Page](assets/home%20page.png)
@@ -46,11 +45,4 @@ Here’s a preview of Gradsquad so far:
 ### Settings
 ![Gradsquad Settings](assets/setings.png)
 
-*(Note: If your filenames have spaces, GitHub requires `%20` in the path — e.g., `home%20page.png` instead of `home page.png`.)*
-
-## 📂 Installation
-To run locally:
-```bash
-git clone https://github.com/naomikalau-del/Gradsquad-project.git
-cd Gradsquad-project
 # Open with localhost or your preferred server
