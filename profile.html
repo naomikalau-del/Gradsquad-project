@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Gradsquad - Profile</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      :root{
+        --bg:#0f1416;
+        --card:#15191b;
+        --card-2:#0d1112;
+        --muted:#8f9aa0;
+        --text:#eef2f3;
+        --accent:#2a9d8f;
+        --sidebar-width:220px;
+      }
+
+      html, body {
+        margin:0;
+        height:100%;
+        font-family: Inter, Arial, sans-serif;
+        background: linear-gradient(180deg, #0b0d0e 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      header.app-header {
+        position: fixed;
+        top:0;
+        left: var(--sidebar-width);
+        right:0;
+        height: 68px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+        backdrop-filter: blur(6px);
+        z-index: 999;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+      }
+
+      header.app-header h1 {
+        margin:0;
+        font-size:26px;
+        letter-spacing:0.6px;
+        font-weight:700;
+        text-align:center;
+      }
+
+      main.container {
+        max-width:600px;
+        margin: 92px auto 40px;
+        margin-left: calc(var(--sidebar-width) + 20px);
+        padding:24px;
+        background: var(--card);
+        border-radius:12px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+      }
+
+      .profile-header {
+        text-align:center;
+        margin-bottom:32px;
+        padding-bottom:24px;
+        border-bottom:1px solid rgba(255,255,255,0.08);
+      }
+
+      .avatar-section {
+        position:relative;
+        display:inline-block;
+        margin-bottom:16px;
+      }
+
+      #avatar {
+        width:120px;
+        height:120px;
+        border-radius:50%;
+        object-fit:cover;
+        border:3px solid var(--accent);
+        box-shadow: 0 8px 20px rgba(42,157,143,0.3);
+      }
+
+      .upload-overlay {
+        position:absolute;
+        bottom:0;
+        right:0;
+        width:40px;
+        height:40px;
+        background:var(--accent);
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        font-size:20px;
+        transition: opacity 0.2s ease;
+      }
+
+      .upload-overlay:hover {
+        opacity:0.9;
+      }
+
+      #avatarUpload {
+        display:none;
+      }
+
+      .user-info {
+        margin-bottom:20px;
+      }
+
+      .info-row {
+        display:flex;
+        justify-content:space-between;
+        padding:10px 0;
+        border-bottom:1px solid rgba(255,255,255,0.05);
+      }
+
+      .info-row:last-child {
+        border-bottom:none;
+      }
+
+      .info-label {
+        color:var(--muted);
+        font-size:13px;
+        font-weight:600;
+      }
+
+      .info-value {
+        color:var(--text);
+        font-size:14px;
+        font-weight:600;
+      }
+
+      .color-swatch {
+        display:inline-block;
+        width:20px;
+        height:20px;
+        border-radius:4px;
+        border:1px solid rgba(255,255,255,0.2);
+      }
+
+      .achievements-section {
+        margin-top:32px;
+      }
+
+      .achievements-section h2 {
+        font-size:16px;
+        font-weight:700;
+        margin:0 0 16px 0;
+        color:var(--text);
+      }
+
+      .achievements-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fill, minmax(80px, 1fr));
+        gap:12px;
+      }
+
+      .achievement-badge {
+        background:linear-gradient(180deg, rgba(42,157,143,0.2) 0%, rgba(42,157,143,0.1) 100%);
+        border:1px solid rgba(42,157,143,0.4);
+        border-radius:8px;
+        padding:12px;
+        text-align:center;
+        cursor:pointer;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        position:relative;
+      }
+
+      .achievement-badge:hover {
+        transform:translateY(-2px);
+        border-color:rgba(42,157,143,0.7);
+      }
+
+      .badge-emoji {
+        font-size:32px;
+        margin-bottom:4px;
+      }
+
+      .badge-name {
+        font-size:11px;
+        font-weight:600;
+        color:var(--text);
+        word-break:break-word;
+        line-height:1.2;
+      }
+
+      .badge-level {
+        position:absolute;
+        top:4px;
+        right:4px;
+        background:var(--accent);
+        color:#fff;
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:11px;
+        font-weight:700;
+      }
+
+      .empty-achievements {
+        text-align:center;
+        color:var(--muted);
+        font-size:13px;
+        padding:20px;
+      }
+
+      .tooltip {
+        position:absolute;
+        background:var(--card-2);
+        border:1px solid rgba(42,157,143,0.4);
+        padding:8px 12px;
+        border-radius:6px;
+        font-size:12px;
+        white-space:nowrap;
+        bottom:calc(100% + 8px);
+        left:50%;
+        transform:translateX(-50%);
+        display:none;
+        z-index:1000;
+        color:var(--text);
+      }
+
+      .achievement-badge:hover .tooltip {
+        display:block;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Profile</h1>
+    </header>
+
+    <main class="container">
+      <div class="profile-header">
+        <div class="avatar-section">
+          <img id="avatar" src="uploads/default.png" alt="Profile Picture">
+          <div class="upload-overlay" onclick="document.getElementById('avatarUpload').click()" title="Change avatar">
+            📸
+          </div>
+          <input type="file" id="avatarUpload" accept="image/*">
+        </div>
+
+        <div class="user-info">
+          <div class="info-row">
+            <span class="info-label">Nickname</span>
+            <span class="info-value" id="nickname">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Birthdate</span>
+            <span class="info-value" id="birthdate">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Color</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="color-swatch" id="colorSwatch"></span>
+              <span class="info-value" id="color">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="achievements-section">
+        <h2>🏅 Achievements</h2>
+        <div id="achievementsGrid" class="achievements-grid"></div>
+        <div id="emptyAchievements" class="empty-achievements">
+          Keep being awesome! Complete activities to earn badges.
+        </div>
+      </div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+      const socket = io();
+      loadSidebar(true);
+
+      const nickname = localStorage.getItem('nickname') || '-';
+
+      // Load user info
+      document.getElementById('nickname').textContent = nickname;
+      document.getElementById('birthdate').textContent = localStorage.getItem('birthdate') || '-';
+      const colorText = localStorage.getItem('color') || '-';
+      document.getElementById('color').textContent = colorText;
+
+      // Set color swatch
+      if (colorText && colorText !== '-') {
+        // Extract hex from color name or use it directly
+        const colorMap = {
+          'Teal': '#2a9d8f', 'Blue': '#3b82f6', 'Purple': '#8b5cf6', 'Orange': '#f97316',
+          'Green': '#10b981', 'Pink': '#ec4899', 'Red': '#ef4444', 'Yellow': '#f59e0b',
+          'Indigo': '#6366f1', 'Cyan': '#06b6d4', 'Lime': '#84cc16', 'Rose': '#fb7185',
+          'Amber': '#f59e0b', 'Slate': '#64748b'
+        };
+        document.getElementById('colorSwatch').style.background = colorMap[colorText] || colorText;
+      }
+
+      // Load avatar from localStorage if available
+      const savedAvatar = localStorage.getItem('avatar');
+      if (savedAvatar) {
+        document.getElementById('avatar').src = savedAvatar;
+      }
+
+      // Handle avatar upload
+      document.getElementById('avatarUpload').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('nickname', nickname);
+
+        try {
+          const res = await fetch('/upload-avatar', { method: 'POST', body: formData });
+          const data = await res.json();
+
+          if (data.success) {
+            document.getElementById('avatar').src = data.url;
+            localStorage.setItem('avatar', data.url);
+            loadAchievements(); // Refresh achievements
+          } else {
+            alert("Upload failed!");
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          alert("Upload failed!");
+        }
+      });
+
+      // Load achievements
+      async function loadAchievements() {
+        try {
+          const res = await fetch(`/achievements/${nickname}`);
+          const achievements = await res.json();
+          renderAchievements(achievements);
+        } catch (err) {
+          console.error("Failed to load achievements:", err);
+        }
+      }
+
+      function renderAchievements(achievements) {
+        const grid = document.getElementById('achievementsGrid');
+        const empty = document.getElementById('emptyAchievements');
+
+        if (!achievements || achievements.length === 0) {
+          grid.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+
+        empty.style.display = 'none';
+        grid.innerHTML = achievements.map(ach => `
+          <div class="achievement-badge">
+            <div class="badge-level">${ach.level}</div>
+            <div class="badge-emoji">${ach.emoji}</div>
+            <div class="badge-name">${ach.name}</div>
+            <div class="tooltip">${ach.progress}/${ach.threshold}</div>
+          </div>
+        `).join('');
+      }
+
+      // Load achievements on page load
+      loadAchievements();
+
+      // Listen for avatar changes via socket
+      socket.on('connect', () => {
+        // Optionally refresh achievements on reconnect
+      });
+    </script>
+  </body>
+</html>

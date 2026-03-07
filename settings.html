@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Gradsquad - Settings</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root{
+      --bg:#0f1416;
+      --card:#15191b;
+      --muted:#8f9aa0;
+      --text:#eef2f3;
+      --accent:#2a9d8f;
+      --sidebar-width:220px;
+    }
+    html, body {
+      margin:0;
+      height:100%;
+      font-family:Inter, Arial, sans-serif;
+      background: linear-gradient(180deg,#0b0d0e 0%,var(--bg) 100%);
+      color:var(--text);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--card);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      padding: 68px 12px 12px 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 1000;
+    }
+    .sidebar h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .user-item {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 8px;
+      border-radius:6px;
+      cursor:default;
+    }
+    .user-item .dot {
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: grey;
+    }
+    .user-item .name {
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    header.app-header {
+      position: fixed;
+      top: 0;
+      left: var(--sidebar-width);
+      right: 0;
+      height: 68px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    header.app-header h1 {
+      margin:0;
+      font-size:26px;
+      font-weight:700;
+      text-align:center;
+    }
+
+    main.container {
+      width: 920px;
+      max-width:95%;
+      background:#15191b;
+      border-radius:12px;
+      padding:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.6);
+      margin-left: calc(var(--sidebar-width) + 20px);
+      margin-top: 100px;
+    }
+
+    h2{ margin:0 0 14px 0; font-size:20px; }
+    .row{ display:flex; gap:16px; margin-bottom:12px; align-items:center; }
+    label{ width:160px; color:var(--muted); font-size:14px; }
+    input[type="text"], input[type="password"], input[type="color"]{
+      flex:1;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:#0d1112;
+      color:var(--text);
+    }
+    .hint{ font-size:12px; color:var(--muted); margin-top:6px; }
+    .actions{ display:flex; gap:12px; justify-content:flex-end; margin-top:18px; }
+    .btn{
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      padding:10px 14px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn.ghost{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.06);
+      color:var(--muted);
+    }
+    .msg { margin-top:10px; font-size:13px; color:#f0f0f0; }
+    .msg.error { color:#ff7b7b; }
+    .msg.success { color:#7bffb8; }
+
+    /* Back to dashboard button */
+    #backDashboard {
+      margin-bottom: 20px;
+      padding:8px 12px;
+      background: var(--accent);
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:600;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Settings</h1>
+  </header>
+
+  <main class="container">
+    <h2>Account Settings</h2>
+
+    <form id="settingsForm">
+      <div class="row">
+        <label for="currentPassword">Current password</label>
+        <input id="currentPassword" type="password" placeholder="Enter current password" required />
+      </div>
+
+      <div class="row">
+        <label for="newNickname">New nickname</label>
+        <input id="newNickname" type="text" placeholder="Leave blank to keep current" />
+      </div>
+
+      <div class="row">
+        <label for="newColor">Preferred color</label>
+        <input id="newColor" type="color" />
+      </div>
+
+      <div class="row">
+        <label for="newPassword">New password</label>
+        <input id="newPassword" type="password" placeholder="Leave blank to keep current" />
+      </div>
+
+      <div class="row">
+        <label for="confirmPassword">Confirm password</label>
+        <input id="confirmPassword" type="password" placeholder="Confirm new password" />
+      </div>
+
+      <div class="hint">You must enter your current password to apply any changes. Leave fields blank to keep them unchanged.</div>
+
+      <div class="actions">
+        <button type="button" class="btn ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn" id="saveBtn">Save changes</button>
+      </div>
+
+      <div id="feedback" class="msg" role="status" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="sidebar.js"></script>
+  <script>
+    const socket = io();
+    
+    loadSidebar(true);
+
+    // Populate defaults from localStorage
+    const nickname = localStorage.getItem('nickname') || '';
+    const color = localStorage.getItem('color') || '#2a9d8f';
+    document.getElementById('newNickname').value = '';
+    document.getElementById('newColor').value = color;
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      window.location.href = '/dashboard';
+    });
+
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('currentPassword').value.trim();
+      const newNickname = document.getElementById('newNickname').value.trim();
+      const newColor = document.getElementById('newColor').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const feedback = document.getElementById('feedback');
+
+      feedback.textContent = '';
+      feedback.className = 'msg';
+
+      if (!currentPassword) {
+        feedback.textContent = 'Please enter your current password.';
+        feedback.classList.add('error');
+        return;
+      }
+
+      if (newPassword && newPassword !== confirmPassword) {
+        feedback.textContent = 'New password and confirmation do not match.';
+        feedback.classList.add('error');
+        return;
+      }
+
+      const payload = {
+        currentPassword,
+        newNickname: newNickname || null,
+        newColor: newColor || null,
+        newPassword: newPassword || null,
+        oldNickname: localStorage.getItem('nickname') || null
+      };
+
+      try {
+        const res = await fetch('/update-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          feedback.textContent = data.message || 'Update failed.';
+          feedback.classList.add('error');
+          return;
+        }
+
+        if (data.nickname) localStorage.setItem('nickname', data.nickname);
+        if (data.color) localStorage.setItem('color', data.color);
+
+        feedback.textContent = 'Settings updated successfully.';
+        feedback.classList.add('success');
+
+        setTimeout(() => window.location.href = '/dashboard', 900);
+      } catch (err) {
+        feedback.textContent = 'Network error. Try again.';
+        feedback.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>

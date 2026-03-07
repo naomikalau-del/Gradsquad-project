@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Gradsquad - Home</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      html {
+        margin: 0;
+        padding: 0;
+      }
+      
+      body { 
+        font-family: Arial, sans-serif; 
+        text-align: center; 
+        background: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      header {
+        margin: 0;
+        padding: 20px;
+        font-size: 2.5em;
+        font-weight: bold;
+        width: 100%;
+        box-sizing: border-box;
+        background: #0f1416;
+        color: #eef2f3;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      
+      h1 { 
+        display: none;
+      }
+      
+      .forms-container {
+        display: flex;
+        justify-content: center;
+        gap: 80px;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 20px 40px 20px;
+      }
+      
+      .form-section {
+        flex: 0 0 auto;
+        width: 320px;
+      }
+      
+      .form-section h2 {
+        margin: 0 0 30px 0;
+        font-size: 1.8em;
+        color: #333;
+        font-weight: 700;
+      }
+      
+      form {
+        background: #444444;
+        padding: 20px 40px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        text-align: left;
+      }
+      
+      form h3 { 
+        display: none;
+      }
+      
+      input, select {
+        width: 100%; 
+        margin: 8px 0; 
+        padding: 10px;
+        border-radius: 4px; 
+        border: 1px solid #ccc;
+        background: #fff; 
+        color: #111;
+        box-sizing: border-box;
+      }
+      
+      select { 
+        background: #fff; 
+        color: #111; 
+      }
+      
+      button {
+        background: #2a9d8f; 
+        color: #f8f8f8; 
+        border: none; 
+        cursor: pointer;
+        width: 100%; 
+        padding: 10px 0; 
+        font-size: 0.95em;
+        font-weight: 600;
+        border-radius: 4px;
+        margin-top: 8px;
+      }
+      
+      button:hover { 
+        background: #264653; 
+      }
+      
+      @media (max-width: 800px) {
+        .forms-container {
+          flex-direction: column;
+          gap: 40px;
+          align-items: center;
+        }
+        .form-section {
+          width: 280px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>Welcome to Gradsquad 🎓</header>
+
+    <div class="forms-container">
+      <div class="form-section">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
+          <input id="signupNickname" placeholder="Nickname" autocomplete="off" />
+          <input id="signupPassword" type="password" placeholder="Password" autocomplete="off" />
+          <input id="signupBirthdate" type="date" />
+          <select id="signupColor" aria-label="Choose a color">
+            <!-- populated by script -->
+          </select>
+          <button type="submit">Sign Up</button>
+        </form>
+      </div>
+
+      <div class="form-section">
+        <h2>Log In</h2>
+        <form id="loginForm">
+          <input id="loginNickname" placeholder="Nickname" autocomplete="off" />
+          <input id="loginPassword" type="password" placeholder="Password" autocomplete="off" />
+          <button type="submit">Log In</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+
+      // Fallback color list (used immediately so select is never empty)
+      const fallbackColors = [
+        { name: 'Teal', hex: '#2a9d8f' },
+        { name: 'Blue', hex: '#3b82f6' },
+        { name: 'Purple', hex: '#8b5cf6' },
+        { name: 'Orange', hex: '#f97316' },
+        { name: 'Green', hex: '#10b981' },
+        { name: 'Pink', hex: '#ec4899' }
+      ];
+
+      const signupColor = document.getElementById('signupColor');
+
+      // Utility: compute readable text color (black/white) for contrast
+      function readableTextColor(hex) {
+        // strip #
+        const h = hex.replace('#','');
+        const r = parseInt(h.substring(0,2),16);
+        const g = parseInt(h.substring(2,4),16);
+        const b = parseInt(h.substring(4,6),16);
+        // luminance formula
+        const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+        return luminance > 0.6 ? '#111' : '#fff';
+      }
+
+      // Populate select with given colors array
+      function populateColors(colors) {
+        signupColor.innerHTML = '';
+        // placeholder option
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Choose a color';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        signupColor.appendChild(placeholder);
+
+        colors.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.hex;
+          opt.textContent = c.name;
+          // style option background and text for better visibility in many browsers
+          // Note: some browsers ignore option styling, but this helps where supported.
+          opt.style.backgroundColor = c.hex;
+          opt.style.color = readableTextColor(c.hex);
+          signupColor.appendChild(opt);
+        });
+      }
+
+      // Immediately populate with fallback so the control is usable even if socket event is delayed
+      populateColors(fallbackColors);
+
+      // If server sends available colors, replace the options
+      socket.on('available colors', colors => {
+        if (Array.isArray(colors) && colors.length) {
+          // Expecting array of { name, hex }
+          populateColors(colors);
+        }
+      });
+
+      // Form handlers
+      document.getElementById('signupForm').addEventListener('submit', e => {
+        e.preventDefault();
+        socket.emit('signup', {
+          nickname: document.getElementById('signupNickname').value,
+          password: document.getElementById('signupPassword').value,
+          birthdate: document.getElementById('signupBirthdate').value,
+          color: signupColor.value
+        });
+      });
+
+      document.getElementById('loginForm').addEventListener('submit', e => {
+        e.preventDefault();
+        socket.emit('login', {
+          nickname: document.getElementById('loginNickname').value,
+          password: document.getElementById('loginPassword').value
+        });
+      });
+
+      // Redirect to dashboard on success
+      socket.on('signup success', (user) => {
+        localStorage.setItem('nickname', user.nickname);
+        localStorage.setItem('birthdate', user.birthdate);
+        localStorage.setItem('color', user.color);
+        localStorage.setItem('avatar', user.avatar);
+        window.location.href = "/dashboard";
+      });
+
+      socket.on('login success', (user) => {
+        localStorage.setItem('nickname', user.nickname);
+        localStorage.setItem('birthdate', user.birthdate);
+        localStorage.setItem('color', user.color);
+        localStorage.setItem('avatar', user.avatar);
+        window.location.href = "/dashboard";
+      });
+
+      socket.on('signup error', msg => alert(msg));
+      socket.on('login error', msg => alert(msg));
+    </script>
+  </body>
+</html>

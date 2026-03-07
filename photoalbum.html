@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Gradsquad - Photo Album</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root{
+      --bg:#0f1416;
+      --card:#15191b;
+      --card-2:#0d1112;
+      --muted:#8f9aa0;
+      --text:#eef2f3;
+      --accent:#2a9d8f;
+      --sidebar-width:220px;
+    }
+
+    html, body {
+      margin:0;
+      height:100%;
+      font-family: Inter, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b0d0e 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    header.app-header {
+      position: fixed;
+      top:0;
+      left: var(--sidebar-width);
+      right:0;
+      height: 68px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    header.app-header h1 {
+      margin:0;
+      font-size:26px;
+      letter-spacing:0.6px;
+      font-weight:700;
+      text-align:center;
+    }
+
+    main.container {
+      max-width:1000px;
+      margin: 92px auto 40px;
+      margin-left: calc(var(--sidebar-width) + 20px);
+      padding:24px;
+      background: var(--card);
+      border-radius:12px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+    }
+
+    .upload-section {
+      background: linear-gradient(180deg, var(--card-2) 0%, rgba(13, 17, 18, 0.6) 100%);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      border: 1px dashed rgba(42, 157, 143, 0.3);
+    }
+
+    .upload-section h2 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-group input,
+    .input-group textarea {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: var(--card);
+      color: var(--text);
+      font-size: 14px;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    .input-group input::placeholder,
+    .input-group textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      display: none;
+    }
+
+    .file-input-label {
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: opacity 0.2s ease;
+    }
+
+    .file-input-label:hover {
+      opacity: 0.9;
+    }
+
+    .file-name {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .upload-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: opacity 0.2s ease;
+      align-self: flex-start;
+    }
+
+    .upload-btn:hover {
+      opacity: 0.9;
+    }
+
+    .upload-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .photo-card {
+      background: var(--card-2);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .photo-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    }
+
+    .photo-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: rgba(0,0,0,0.3);
+    }
+
+    .photo-info {
+      padding: 12px;
+    }
+
+    .photo-caption {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+
+    .photo-meta {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .photo-uploader {
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state p {
+      margin: 12px 0 0 0;
+      font-size: 14px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90vh;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+    }
+
+    .modal-image {
+      max-width: 100%;
+      max-height: 70vh;
+      border-radius: 8px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+
+    .modal-close:hover {
+      background: rgba(0,0,0,0.8);
+    }
+
+    .modal-caption {
+      margin-top: 12px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+
+      .input-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .upload-btn {
+        align-self: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Photo Album 📸</h1>
+  </header>
+
+  <main class="container">
+    <div class="upload-section">
+      <h2>Upload a Photo</h2>
+      <form class="upload-form" id="uploadForm">
+        <div class="input-group">
+          <div class="file-input-wrapper">
+            <label for="photoInput" class="file-input-label">Choose Photo</label>
+            <input type="file" id="photoInput" accept="image/*" required>
+            <div class="file-name" id="fileName">No file selected</div>
+          </div>
+        </div>
+        <textarea id="captionInput" placeholder="Add a caption (optional)" rows="2" style="resize: vertical;"></textarea>
+        <button type="submit" class="upload-btn" id="uploadBtn">Upload Photo</button>
+      </form>
+    </div>
+
+    <div id="gallery" class="gallery"></div>
+
+    <div id="emptyState" class="empty-state">
+      <div style="font-size: 48px; margin-bottom: 12px;">📸</div>
+      <p>No photos yet. Start creating memories!</p>
+    </div>
+  </main>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <img id="modalImage" class="modal-image" src="" alt="Photo">
+      <div class="modal-caption" id="modalCaption"></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="sidebar.js"></script>
+  <script>
+    const socket = io();
+    const nickname = localStorage.getItem('nickname');
+    
+    loadSidebar(true);
+
+    // File input display
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+      const fileName = e.target.files[0]?.name || 'No file selected';
+      document.getElementById('fileName').textContent = fileName;
+    });
+
+    // Load photos
+    async function loadPhotos() {
+      try {
+        const res = await fetch('/photos');
+        const photos = await res.json();
+        renderPhotos(photos);
+      } catch (err) {
+        console.error("Failed to load photos:", err);
+      }
+    }
+
+    function renderPhotos(photos) {
+      const gallery = document.getElementById('gallery');
+      const emptyState = document.getElementById('emptyState');
+
+      if (!photos || photos.length === 0) {
+        gallery.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      gallery.innerHTML = photos.map(photo => `
+        <div class="photo-card" onclick="openModal('${photo.url}', '${photo.caption}')">
+          <img src="${photo.url}" alt="Photo" class="photo-image" onerror="this.src='uploads/default.png'">
+          <div class="photo-info">
+            <div class="photo-caption">${photo.caption || 'No caption'}</div>
+            <div class="photo-meta">
+              <span class="photo-uploader">by ${photo.uploader}</span>
+              <span>${formatDate(photo.date)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function openModal(imageSrc, caption) {
+      document.getElementById('modalImage').src = imageSrc;
+      document.getElementById('modalCaption').textContent = caption;
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+
+    // Upload photo
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const fileInput = document.getElementById('photoInput');
+      const caption = document.getElementById('captionInput').value.trim();
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('Please select a photo');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('caption', caption);
+      formData.append('uploader', nickname);
+
+      try {
+        document.getElementById('uploadBtn').disabled = true;
+        const res = await fetch('/upload-photo', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          fileInput.value = '';
+          document.getElementById('captionInput').value = '';
+          document.getElementById('fileName').textContent = 'No file selected';
+          loadPhotos();
+          socket.emit('photo uploaded');
+        } else {
+          alert(data.message || 'Failed to upload photo');
+        }
+      } catch (err) {
+        console.error("Upload failed:", err);
+        alert('Upload failed');
+      } finally {
+        document.getElementById('uploadBtn').disabled = false;
+      }
+    });
+
+    // Socket listeners
+    socket.on('photo uploaded', () => loadPhotos());
+
+    // Close modal on background click
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') {
+        closeModal();
+      }
+    });
+
+    // Load on page load
+    loadPhotos();
+  </script>
+</body>
+</html>

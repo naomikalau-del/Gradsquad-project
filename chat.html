@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Gradsquad - Chat</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root{
+      --bg:#0f1416;
+      --card:#15191b;
+      --card-2:#0d1112;
+      --muted:#8f9aa0;
+      --text:#eef2f3;
+      --accent:#2a9d8f;
+      --sidebar-width:220px;
+    }
+
+    html, body {
+      margin:0;
+      height:100%;
+      font-family: Inter, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b0d0e 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--card);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      padding: 68px 12px 12px 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 1000;
+    }
+    .sidebar h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .sidebar button {
+      background: var(--accent);
+      color:#fff;
+      border:none;
+      padding:10px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .user-item {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 8px;
+      border-radius:6px;
+      cursor:default;
+    }
+    .user-item .dot {
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: grey;
+    }
+    .user-item .name {
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    header.app-header {
+      position: fixed;
+      top:0;
+      left: var(--sidebar-width);
+      right:0;
+      height: 68px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    header.app-header h1 {
+      margin:0;
+      font-size:26px;
+      letter-spacing:0.6px;
+      font-weight:700;
+      text-align:center;
+    }
+
+    main.container {
+      max-width:900px;
+      margin: 92px auto 40px;
+      margin-left: calc(var(--sidebar-width) + 20px);
+      padding:24px;
+      background: var(--card);
+      border-radius:12px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+    }
+
+    /* Chat messages area */
+    #chatMessages {
+      height: 500px;
+      background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    /* Scrollbar styling */
+    #chatMessages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #chatMessages::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    #chatMessages::-webkit-scrollbar-thumb {
+      background: var(--muted);
+      border-radius: 10px;
+    }
+
+    #chatMessages::-webkit-scrollbar-thumb:hover {
+      background: rgba(143, 154, 160, 0.8);
+    }
+
+    .message {
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, var(--card-2) 0%, rgba(13, 17, 18, 0.6) 100%);
+      display: flex;
+      gap: 12px;
+      border-left: 3px solid transparent;
+    }
+
+    .message.system {
+      background: rgba(42, 157, 143, 0.1);
+      color: var(--accent);
+      font-style: italic;
+      text-align: center;
+      justify-content: center;
+      border-left: 3px solid var(--accent);
+    }
+
+    .message-sender {
+      font-weight: 700;
+      min-width: 110px;
+      font-size: 14px;
+    }
+
+    .message-text {
+      flex: 1;
+      color: var(--text);
+      word-wrap: break-word;
+      font-size: 14px;
+    }
+
+    /* Chat input area */
+    #chatInput {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    #chatInput input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: var(--card-2);
+      color: var(--text);
+      font-size: 14px;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    #chatInput input::placeholder {
+      color: var(--muted);
+    }
+
+    #chatInput button {
+      padding: 12px 20px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s ease;
+    }
+
+    #chatInput button:hover {
+      opacity: 0.9;
+    }
+
+    #chatInput button:active {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Chat Room</h1>
+  </header>
+
+  <main class="container">
+    <div id="chatMessages">Loading messages...</div>
+    
+    <div id="chatInput">
+      <input type="text" id="messageInput" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="sidebar.js"></script>
+  <script>
+    const socket = io();
+    const nickname = localStorage.getItem('nickname');
+    let notificationShown = false; // Track if notification was shown for current batch
+    
+    loadSidebar(true);
+
+    // Request notification permission on page load
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Mark messages as read when user opens chat page
+    localStorage.setItem('unreadMessages', '0');
+    notificationShown = false;
+
+    // Emit join chat event when page loads
+    if (nickname) {
+      socket.emit('join chat', { nickname });
+    }
+
+    // Emit leave chat event when user leaves the page
+    window.addEventListener('beforeunload', () => {
+      if (nickname) {
+        socket.emit('leave chat', { nickname });
+      }
+      // Mark as read when leaving
+      localStorage.setItem('unreadMessages', '0');
+    });
+
+    // Load chat history on page load
+    socket.on('chat history', (messages) => {
+      renderMessages(messages);
+      // Mark as read since user is viewing
+      localStorage.setItem('unreadMessages', '0');
+    });
+
+    // Listen for new messages
+    socket.on('chat message', (msg) => {
+      appendMessage(msg);
+      // Only track unread if not a system message
+      if (!msg.system) {
+        const unreadCount = parseInt(localStorage.getItem('unreadMessages') || '0') + 1;
+        localStorage.setItem('unreadMessages', unreadCount.toString());
+        
+        // Show notification only once per batch
+        if (!notificationShown && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('New message in Gradsquad Chat', {
+            body: `${msg.nickname}: ${msg.text.substring(0, 60)}${msg.text.length > 60 ? '...' : ''}`,
+            icon: 'uploads/default.png',
+            tag: 'gradsquad-chat'
+          });
+          notificationShown = true;
+        }
+      }
+    });
+
+    // Re-enable notification when new messages session starts (after 5 seconds of no messages)
+    let notificationTimeout;
+    socket.on('chat message', () => {
+      clearTimeout(notificationTimeout);
+      notificationTimeout = setTimeout(() => {
+        notificationShown = false;
+      }, 5000);
+    });
+
+    function renderMessages(messages) {
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = '';
+      messages.forEach(msg => {
+        appendMessage(msg);
+      });
+    }
+
+    function appendMessage(msg) {
+      const container = document.getElementById('chatMessages');
+      const msgEl = document.createElement('div');
+      msgEl.className = 'message' + (msg.system ? ' system' : '');
+      
+      if (msg.system) {
+        msgEl.textContent = msg.text;
+      } else {
+        const senderEl = document.createElement('div');
+        senderEl.className = 'message-sender';
+        senderEl.style.color = msg.color || 'var(--accent)';
+        senderEl.textContent = msg.nickname;
+        
+        const textEl = document.createElement('div');
+        textEl.className = 'message-text';
+        textEl.textContent = msg.text;
+        
+        msgEl.appendChild(senderEl);
+        msgEl.appendChild(textEl);
+      }
+      
+      container.appendChild(msgEl);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      
+      if (!text) return;
+      
+      socket.emit('chat message', { 
+        nickname: nickname || 'Anonymous',
+        text: text
+      });
+      
+      input.value = '';
+      input.focus();
+    }
+
+    // Allow Enter key to send
+    document.getElementById('messageInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>

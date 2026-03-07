@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Gradsquad - Calendar</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --bg:#0f1416;
+      --card:#15191b;
+      --card-2:#0d1112;
+      --accent:#2a9d8f;
+      --muted:#8f9aa0;
+      --text:#eef2f3;
+    }
+
+   html, body {
+  height:100%;
+  margin:0;
+  font-family: Inter, Arial, sans-serif;
+  background: linear-gradient(180deg, #0b0d0e 0%, var(--bg) 100%);
+  color:var(--text);
+}
+
+    /* Sidebar */
+    aside.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 100%;
+  background: var(--card);
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  border-right:1px solid rgba(255,255,255,0.05);
+}
+    aside.sidebar h2 {
+      margin:0 0 12px 0;
+      font-size:18px;
+      font-weight:700;
+    }
+
+    aside.sidebar button {
+      background: var(--accent);
+      color:#fff;
+      border:none;
+      padding:10px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    aside.sidebar .online-user {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:14px;
+    }
+
+    aside.sidebar .online-dot {
+      width:10px;
+      height:10px;
+      background:#2a9d8f;
+      border-radius:50%;
+    }
+
+    /* Main content next to sidebar */
+    main.container {
+      flex:1;
+      margin:100px 24px 40px 300px; /* leave top space for header, move right */
+      padding:24px;
+      background: var(--card);
+      border-radius:12px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+      text-align:center;
+      max-width:700px;
+      width:100%;
+    }
+
+    header.app-header {
+      position: fixed;
+      top:0;
+      left:220px; /* space for sidebar */
+      right:0;
+      height:68px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+      backdrop-filter: blur(6px);
+      z-index:1000;
+      border-bottom:1px solid rgba(255,255,255,0.03);
+    }
+
+    header.app-header h1 {
+      margin:0;
+      font-size:26px;
+      letter-spacing:0.6px;
+      font-weight:700;
+      text-align:center;
+    }
+
+    #calendar {
+      margin-bottom:20px;
+    }
+
+    #calendar div {
+      background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+      border-radius:8px;
+      padding:10px;
+      margin:6px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    form#eventForm {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:center;
+      max-width:90%; /* center the form and limit width */
+      margin:auto;
+    }
+
+    form#eventForm input, form#eventForm button {
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      font-size:14px;
+    }
+
+    form#eventForm input {
+      width:100%;
+      background: var(--card-2);
+      color: var(--text);
+    }
+
+    form#eventForm button {
+      background: var(--accent);
+      color:#fff;
+      font-weight:600;
+      cursor:pointer;
+      width:50%;
+    }
+
+    #attendeesSection {
+      background: linear-gradient(180deg, var(--card-2) 0%, rgba(13, 17, 18, 0.6) 100%);
+      border-radius:8px;
+      padding:12px;
+      margin-top:10px;
+      width:100%;
+      max-width:none;
+      text-align:left;
+    }
+
+    #attendeesSection h3 {
+      margin:0 0 10px 0;
+      font-size:14px;
+      font-weight:600;
+      color:var(--text);
+    }
+
+    .attendee-checkbox {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px;
+      margin:4px 0;
+      cursor:pointer;
+    }
+
+    .attendee-checkbox input {
+      cursor:pointer;
+      width:auto;
+      margin:0;
+    }
+
+    .attendee-checkbox label {
+      margin:0;
+      cursor:pointer;
+      flex:1;
+      font-size:13px;
+    }
+
+    #calendar div.event-item {
+      text-align:left;
+    }
+
+    .event-title {
+      font-weight:600;
+      color:var(--text);
+      margin-bottom:6px;
+    }
+
+    .event-attendees {
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .event-attendees-list {
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:4px;
+    }
+
+    .attendee-tag {
+      background:rgba(42,157,143,0.2);
+      border:1px solid rgba(42,157,143,0.4);
+      padding:4px 8px;
+      border-radius:4px;
+      font-size:12px;
+    }
+
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Calendar</h1>
+</header>
+
+<main class="container">
+  <div id="calendar"></div>
+
+  <form id="eventForm">
+    <input type="text" id="title" placeholder="Event title" required>
+    <input type="date" id="date" required>
+    <input type="time" id="time">
+    <div id="attendeesSection">
+      <h3>Who's coming? (Optional)</h3>
+      <div id="attendeesList"></div>
+    </div>
+    <button type="submit">Add Event</button>
+  </form>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="sidebar.js"></script>
+<script>
+loadSidebar(true);
+const socket = io();
+let allUsers = [];
+
+// Load all users for attendee selection
+async function loadAllUsers() {
+  try {
+    const res = await fetch('/users');
+    const usersObj = await res.json();
+    allUsers = Object.keys(usersObj);
+    renderAttendeesList();
+  } catch (err) {
+    console.error("Failed to load users:", err);
+  }
+}
+
+function renderAttendeesList() {
+  const container = document.getElementById('attendeesList');
+  container.innerHTML = allUsers.map(user => `
+    <div class="attendee-checkbox">
+      <input type="checkbox" id="attendee-${user}" value="${user}">
+      <label for="attendee-${user}">${user}</label>
+    </div>
+  `).join('');
+}
+
+// Load events
+async function loadEvents() {
+  try {
+    const res = await fetch('/events');
+    const events = await res.json();
+    renderEvents(events);
+  } catch (err) {
+    console.error("Failed to load events:", err);
+  }
+}
+
+function isEventPassed(dateStr, timeStr) {
+  const eventDate = new Date(dateStr);
+  if (timeStr) {
+    const [hours, minutes] = timeStr.split(':');
+    eventDate.setHours(parseInt(hours), parseInt(minutes), 0);
+  } else {
+    eventDate.setHours(23, 59, 59); // End of day if no time specified
+  }
+  return new Date() > eventDate;
+}
+
+function renderEvents(events) {
+  const calendar = document.getElementById('calendar');
+  calendar.innerHTML = '';
+  if(!events.length) {
+    calendar.textContent = 'No events yet.';
+    return;
+  }
+  events.forEach(ev => {
+    const el = document.createElement('div');
+    el.className = 'event-item';
+    const passed = isEventPassed(ev.date, ev.time) ? '(passed) ' : '';
+    
+    let html = `<div class="event-title">${passed}${ev.date} ${ev.time || ''} — ${ev.title}</div>`;
+    
+    if (ev.attendees && ev.attendees.length > 0) {
+      html += `<div class="event-attendees">Confirmed: <div class="event-attendees-list">`;
+      ev.attendees.forEach(name => {
+        html += `<div class="attendee-tag">${name}</div>`;
+      });
+      html += `</div></div>`;
+    }
+    
+    el.innerHTML = html;
+    calendar.appendChild(el);
+  });
+}
+
+loadAllUsers();
+loadEvents();
+
+// Socket updates for new events
+socket.on('new event', (ev) => {
+  const calendar = document.getElementById('calendar');
+  if(calendar.textContent === 'No events yet.') calendar.innerHTML='';
+  const el = document.createElement('div');
+  el.className = 'event-item';
+  const passed = isEventPassed(ev.date, ev.time) ? '(passed) ' : '';
+  
+  let html = `<div class="event-title">${passed}${ev.date} ${ev.time || ''} — ${ev.title}</div>`;
+  
+  if (ev.attendees && ev.attendees.length > 0) {
+    html += `<div class="event-attendees">Confirmed: <div class="event-attendees-list">`;
+    ev.attendees.forEach(name => {
+      html += `<div class="attendee-tag">${name}</div>`;
+    });
+    html += `</div></div>`;
+  }
+  
+  el.innerHTML = html;
+  calendar.appendChild(el);
+});
+
+// Submit new event
+document.getElementById('eventForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('title').value;
+  const date = document.getElementById('date').value;
+  const time = document.getElementById('time').value;
+  const creator = localStorage.getItem('nickname') || 'User';
+
+  // Get selected attendees
+  const attendees = [];
+  document.querySelectorAll('#attendeesList input[type="checkbox"]:checked').forEach(cb => {
+    attendees.push(cb.value);
+  });
+
+  try {
+    const res = await fetch('/events', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ title,date,time,creator,type:'custom',attendees })
+    });
+    const data = await res.json();
+    if(data.success) {
+      document.getElementById('eventForm').reset();
+      // Uncheck all attendees
+      document.querySelectorAll('#attendeesList input[type="checkbox"]').forEach(cb => cb.checked = false);
+      loadEvents();
+    } else {
+      alert(data.message || "Failed to create event.");
+    }
+  } catch(err) {
+    console.error("Event creation failed:", err);
+  }
+});
+</script>
+
+</body>
+</html>

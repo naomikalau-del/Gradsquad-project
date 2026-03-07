@@ -1,0 +1,18 @@
+[
+  {
+    "title": "international day",
+    "date": "2026-03-06",
+    "time": "08:00",
+    "creator": "Annabe_boo",
+    "type": "custom",
+    "reminder": false
+  },
+  {
+    "title": "exams begin",
+    "date": "2026-03-16",
+    "time": "08:00",
+    "creator": "Annabe_boo",
+    "type": "custom",
+    "reminder": false
+  }
+]

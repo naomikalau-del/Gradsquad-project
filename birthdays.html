@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Gradsquad - Birthdays</title>
+<style>
+:root{
+  --bg:#0f1416;
+  --card:#15191b;
+  --card-2:#0d1112;
+  --accent:#2a9d8f;
+  --muted:#8f9aa0;
+  --text:#eef2f3;
+  --sidebar-width:220px;
+}
+
+html,body{
+  height:100%;
+  margin:0;
+  font-family: Inter, Arial, sans-serif;
+  background: linear-gradient(180deg, #0b0d0e 0%, var(--bg) 100%);
+  color:var(--text);
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top:0;
+  left:0;
+  width: var(--sidebar-width);
+  height:100%;
+  background: var(--card);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  padding: 68px 12px 12px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 1000;
+}
+.sidebar h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.sidebar button {
+  background: var(--accent);
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.user-item {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 8px;
+  border-radius:6px;
+  cursor:default;
+}
+.user-item .dot {
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background: grey;
+}
+.user-item .name {
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* header */
+header.app-header{
+  position: fixed;
+  top:0;
+  left: var(--sidebar-width);
+  right:0;
+  height:68px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  z-index:1000;
+}
+header h1{
+  margin:0;
+  font-size:26px;
+}
+
+/* container */
+main.container{
+  max-width:600px;
+  margin:100px 0 40px calc(var(--sidebar-width) + 20px);
+  padding:24px;
+  background:var(--card);
+  border-radius:12px;
+  box-shadow:0 8px 22px rgba(0,0,0,0.6);
+}
+
+#backDashboard {
+  margin-bottom: 20px;
+  padding:8px 12px;
+  background: var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+/* birthday list */
+#birthdayList{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* card */
+.birthday-card{
+  background:linear-gradient(180deg,var(--card) 0%,var(--card-2) 100%);
+  padding:14px;
+  border-radius:10px;
+  box-shadow:0 6px 14px rgba(0,0,0,0.4);
+}
+.birthday-name{
+  font-weight:700;
+  font-size:16px;
+}
+.birthday-date{
+  font-size:13px;
+  color:var(--muted);
+}
+.countdown{
+  margin-top:4px;
+  font-size:13px;
+  color:var(--accent);
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Birthdays 🎂</h1>
+</header>
+
+<main class="container">
+  <div id="birthdayList">Loading...</div>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="sidebar.js"></script>
+<script>
+const socket = io();
+
+loadSidebar(true);
+
+// --- Birthday list ---
+async function loadBirthdays(){
+  const res = await fetch('/users');
+  const users = await res.json();
+
+  const list = document.getElementById('birthdayList');
+  list.innerHTML = '';
+
+  const today = new Date();
+
+  Object.entries(users).forEach(([name, user])=>{
+    if(!user.birthdate) return;
+
+    const birth = new Date(user.birthdate);
+    const next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+    if(next < today) next.setFullYear(today.getFullYear() + 1);
+
+    const diff = Math.ceil((next - today)/(1000*60*60*24));
+
+    const card = document.createElement('div');
+    card.className = 'birthday-card';
+    card.innerHTML = `
+      <div class="birthday-name">${name}</div>
+      <div class="birthday-date">${birth.toDateString()}</div>
+      <div class="countdown">${diff} days remaining</div>
+    `;
+    list.appendChild(card);
+  });
+
+  if(!list.children.length){
+    list.textContent = "No birthdays saved yet.";
+  }
+}
+
+loadBirthdays();
+</script>
+</body>
+</html>
