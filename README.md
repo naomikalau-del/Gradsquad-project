@@ -9,7 +9,8 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 - Custom user profiles
 - Chat and messaging system
 - Event planning (class outings, birthdays, etc.)
-- Photo sharing
+- Photo album sharing
+- Calendar integration
 - Responsive design for desktop and mobile
 
 ## 🛠️ Tech Stack
@@ -21,10 +22,31 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 ## 📸 Screenshots
 Here’s a preview of Gradsquad so far:
 
+### Home Page
+![Gradsquad Home Page](assets/home%20page.png)
+
+### Dashboard
 ![Gradsquad Dashboard](assets/dashboard.png)
 
-*(Save your screenshot in an `assets/` folder inside the repo, then reference it here.  
-You can add more screenshots like `assets/login.png` or `assets/events.png` and stack them below.)*
+### Calendar
+![Gradsquad Calendar](assets/calendar.png)
+
+### Photo Album
+![Gradsquad Photo Album](assets/photo%20album.png)
+
+### Chat
+![Gradsquad Chat](assets/chat.png)
+
+### Birthday List
+![Gradsquad Birthday List](assets/birthday%20list.png)
+
+### Event Planning
+![Gradsquad Event Planning](assets/event%20planning.png)
+
+### Settings
+![Gradsquad Settings](assets/setings.png)
+
+*(Note: If your filenames have spaces, GitHub requires `%20` in the path — e.g., `home%20page.png` instead of `home page.png`.)*
 
 ## 📂 Installation
 To run locally:
