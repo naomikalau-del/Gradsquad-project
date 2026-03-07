@@ -22,7 +22,7 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 ## 📸 Screenshots
 
 ### Home Page
-![Gradsquad Home Page](assets/home%20page.png)
+![Gradsquad Home Page](assets/home.png)
 
 ### Dashboard
 ![Gradsquad Dashboard](assets/dashboard.png)
@@ -31,16 +31,16 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 ![Gradsquad Calendar](assets/calendar.png)
 
 ### Photo Album
-![Gradsquad Photo Album](assets/photo%20album.png)
+![Gradsquad Photo Album](assets/photos.png)
 
 ### Chat
 ![Gradsquad Chat](assets/chat.png)
 
 ### Birthday List
-![Gradsquad Birthday List](assets/birthday%20list.png)
+![Gradsquad Birthday List](assets/birthday.png)
 
 ### Event Planning
-![Gradsquad Event Planning](assets/event%20planning.png)
+![Gradsquad Event Planning](assets/planning.png)
 
 ### Settings
 ![Gradsquad Settings](assets/setings.png)
