@@ -20,26 +20,7 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 - VS Code + GitHub for collaboration
 
 ## 📸 Screenshots
-
-### Home Page
-![Gradsquad Home Page](assets/home.png)
-
-### Dashboard
-![Gradsquad Dashboard](assets/dashboard.png)
-
-### Calendar
-![Gradsquad Calendar](assets/calendar.png)
-
-### Photo Album
-![Gradsquad Photo Album](assets/photos.png)
-
-### Chat
-![Gradsquad Chat](assets/chat.png)
-
-### Birthday List
-![Gradsquad Birthday List](assets/birthday.png)
-
-### Event Planning## 📸 Screenshots
+Here’s a preview of Gradsquad so far:
 
 ### Home Page
 ![Gradsquad Home](assets/home.png)
@@ -65,4 +46,10 @@ This project is part of my portfolio for Yonsei University, showing creativity, 
 ### Settings
 ![Gradsquad Settings](assets/settings.png)
 
+## 📂 Installation
+To run locally:
+```bash
+git clone https://github.com/naomikalau-del/Gradsquad-project.git
+cd Gradsquad-project
 # Open with localhost or your preferred server
+ your preferred server
