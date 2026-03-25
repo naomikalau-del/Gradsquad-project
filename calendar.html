@@ -373,6 +373,9 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
     console.error("Event creation failed:", err);
   }
 });
+ var script = document.createElement('script');
+    script.src = 'background-music.html';
+    document.head.appendChild(script);
 </script>
 
 </body>

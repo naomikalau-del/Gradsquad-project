@@ -230,4 +230,15 @@ button:hover {
 
 .with-sidebar{
   margin-left:220px;
+}.file-input-label {
+  position: relative;
+  z-index: 2;
+}
+
+.file-name {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
 }
