@@ -366,10 +366,45 @@ function calculateAchievements(nickname) {
   return achievements;
 }
 
+function getAllAchievementProgress(nickname) {
+  const user = users[nickname];
+  if (!user) return [];
+
+  const photoCount = photos.filter(p => p.uploader === nickname).length;
+  const messageCount = messages.filter(m => m.nickname === nickname && !m.system).length;
+  const eventCount = events.filter(e => e.creator === nickname).length;
+  const avatarChanges = user.avatarChanges || 0;
+
+  const statMap = {
+    'Photo Enthusiast': photoCount,
+    'Social Butterfly': messageCount,
+    'Planner': eventCount,
+    'Chameleon': avatarChanges
+  };
+
+  const progressList = [];
+
+  Object.entries(achievementDefs).forEach(([name, def]) => {
+    const current = statMap[name] || 0;
+    def.thresholds.forEach((threshold, idx) => {
+      progressList.push({
+        name: `${name} ${idx + 1}`,
+        emoji: def.emoji,
+        level: idx + 1,
+        progress: current,
+        threshold,
+        completed: current >= threshold
+      });
+    });
+  });
+
+  return progressList;
+}
+
 // --- Achievements API ---
 app.get('/achievements/:nickname', (req, res) => {
   const nickname = req.params.nickname;
-  const achievements = calculateAchievements(nickname);
+  const achievements = getAllAchievementProgress(nickname);
   res.json(achievements);
 });
 

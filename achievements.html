@@ -142,6 +142,10 @@
           const res = await fetch(`/achievements/${nickname}`);
           if (!res.ok) throw new Error('Failed to load achievements');
           const achievements = await res.json();
+          if (!Array.isArray(achievements) || achievements.length === 0) {
+            document.getElementById('achievementsList').innerHTML = '<p>No achievements available yet. Keep doing things to unlock badges!</p>';
+            return;
+          }
           renderAchievements(achievements);
         } catch (err) {
           document.getElementById('achievementsList').textContent = 'Error loading achievements.';
