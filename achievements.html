@@ -126,6 +126,8 @@
       <p style="color: var(--muted); margin-top: 0; margin-bottom: 12px;">All stat tiers are listed; completed ones show green check.</p>
       <div id="achievementsList">Loading achievements...</div>
     </main>
+      <div id="achievementsList">Loading achievements...</div>
+    </main>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="sidebar.js"></script>
@@ -159,6 +161,7 @@
       }
 
       function renderAchievements(achievements) {
+        console.log('Rendered achievements', achievements);
         const container = document.getElementById('achievementsList');
         if (!achievements || achievements.length === 0) {
           container.innerHTML = '<p>No achievements yet. Do more to unlock badges!</p>';
@@ -190,5 +193,7 @@
         loadAchievements();
       }
     </script>
+  </body>
+</html>
   </body>
 </html>
