@@ -128,6 +128,7 @@
           <select id="signupColor" aria-label="Choose a color">
             <!-- populated by script -->
           </select>
+          <input id="signupInviteCode" placeholder="Invite Code" autocomplete="off" />
           <button type="submit">Sign Up</button>
         </form>
       </div>
@@ -204,6 +205,14 @@
         }
       });
 
+      // Pre-fill invite code from URL (e.g. /?invite=CODE)
+      const urlParams = new URLSearchParams(window.location.search);
+      const inviteFromUrl = urlParams.get('invite');
+      if (inviteFromUrl) {
+        const inviteInput = document.getElementById('signupInviteCode');
+        inviteInput.value = inviteFromUrl;
+      }
+
       // Form handlers
       document.getElementById('signupForm').addEventListener('submit', e => {
         e.preventDefault();
@@ -211,7 +220,8 @@
           nickname: document.getElementById('signupNickname').value,
           password: document.getElementById('signupPassword').value,
           birthdate: document.getElementById('signupBirthdate').value,
-          color: signupColor.value
+          color: signupColor.value,
+          inviteCode: document.getElementById('signupInviteCode').value
         });
       });
 
@@ -229,6 +239,7 @@
         localStorage.setItem('birthdate', user.birthdate);
         localStorage.setItem('color', user.color);
         localStorage.setItem('avatar', user.avatar);
+        localStorage.setItem('admin', user.admin ? 'true' : 'false');
         window.location.href = "/dashboard";
       });
 
@@ -237,6 +248,7 @@
         localStorage.setItem('birthdate', user.birthdate);
         localStorage.setItem('color', user.color);
         localStorage.setItem('avatar', user.avatar);
+        localStorage.setItem('admin', user.admin ? 'true' : 'false');
         window.location.href = "/dashboard";
       });
 

@@ -41,6 +41,26 @@ if (fs.existsSync(usersFile)) {
   try { users = JSON.parse(fs.readFileSync(usersFile)); } catch { users = {}; }
 }
 
+// Ensure there is at least one admin. If no admin exists, assign the first user.
+if (!Object.values(users).some(u => u.admin)) {
+  const firstUser = Object.keys(users)[0];
+  if (firstUser) {
+    users[firstUser].admin = true;
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  }
+}
+
+// --- Load invites ---
+const invitesFile = 'invites.json';
+let invites = {};
+if (fs.existsSync(invitesFile)) {
+  try { invites = JSON.parse(fs.readFileSync(invitesFile)); } catch { invites = {}; }
+}
+
+function saveInvites() {
+  fs.writeFileSync(invitesFile, JSON.stringify(invites, null, 2));
+}
+
 // --- Load events ---
 let events = [];
 if (fs.existsSync(eventsFile)) {
@@ -139,6 +159,22 @@ app.get('/online-users', (req, res) => {
   const onlineList = Array.from(onlineUsers).map(nickname => ({ nickname }));
   res.json(onlineList);
 });
+
+app.get('/invite/:code', (req, res) => {
+  const code = req.params.code;
+  const invite = invites[code];
+  if (!invite || invite.used) {
+    return res.json({ valid: false });
+  }
+  return res.json({ valid: true, invite });
+});
+
+app.get('/invites', (req, res) => {
+  // Provide a list of active invites for admin dashboards (no passwords, only metadata)
+  const filtered = Object.entries(invites).map(([code, info]) => ({ code, ...info }));
+  res.json(filtered);
+});
+
 app.get('/birthdays', (req, res) => res.sendFile(path.join(__dirname, 'birthdays.html')));
 
 // --- Avatar upload ---
@@ -362,12 +398,21 @@ io.on('connection', (socket) => {
   });
 
   // --- Signup ---
-  socket.on('signup', ({ nickname, password, birthdate, color }) => {
+  socket.on('signup', ({ nickname, password, birthdate, color, inviteCode }) => {
+    if (!inviteCode) return socket.emit('signup error', "Invite code is required.");
+    const invite = invites[inviteCode];
+    if (!invite || invite.used) return socket.emit('signup error', "Invalid or used invite code.");
+
     if (users[nickname]) return socket.emit('signup error', "Nickname taken!");
     if (!reserveColor(color)) return socket.emit('signup error', "Color not available.");
 
-    users[nickname] = { password, birthdate, color, avatar: "default.png" };
+    users[nickname] = { password, birthdate, color, avatar: "default.png", admin: false };
+    invites[inviteCode].used = true;
+    invites[inviteCode].usedBy = nickname;
+    invites[inviteCode].usedAt = new Date().toISOString();
+
     fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    saveInvites();
 
     socket.nickname = nickname;
     socket.isLoggedIn = true;
@@ -390,6 +435,42 @@ io.on('connection', (socket) => {
     socket.emit('login success', { nickname, ...users[nickname] });
 
     // no system join message sent
+  });
+
+  // --- Admin invite actions ---
+  socket.on('generate invite', () => {
+    const creator = socket.nickname;
+    if (!creator || !users[creator]?.admin) return socket.emit('invite error', 'Unauthorized.');
+
+    const code = Math.random().toString(36).slice(2, 10).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase();
+    invites[code] = {
+      createdBy: creator,
+      createdAt: new Date().toISOString(),
+      used: false
+    };
+    saveInvites();
+
+    socket.emit('invite generated', { code, url: `/?invite=${code}` });
+    io.emit('invites updated');
+  });
+
+  socket.on('get invites', () => {
+    const requester = socket.nickname;
+    if (!requester || !users[requester]?.admin) return socket.emit('invite error', 'Unauthorized.');
+    socket.emit('invites list', Object.entries(invites).map(([code, info]) => ({ code, ...info })));
+  });
+
+  socket.on('set admin', (targetNickname) => {
+    const requester = socket.nickname;
+    if (!requester || !users[requester]?.admin) return socket.emit('admin error', 'Unauthorized.');
+    if (!targetNickname || !users[targetNickname]) return socket.emit('admin error', 'User not found.');
+
+    Object.keys(users).forEach((name) => { users[name].admin = false; });
+    users[targetNickname].admin = true;
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+
+    socket.emit('admin updated', targetNickname);
+    io.emit('admin changed', targetNickname);
   });
 
   // --- Chat messages ---

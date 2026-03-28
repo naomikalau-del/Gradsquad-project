@@ -259,6 +259,18 @@
             </div>
           </div>
         </div>
+
+      <div id="adminPanel" style="display:none; margin-top:32px; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px;">
+        <h2>Admin Invite Center</h2>
+        <p>Only admin users can generate one-time invitation links.</p>
+        <button id="generateInviteBtn" style="margin-bottom:10px;">Generate Invite Link</button>
+        <input id="generatedInviteLink" readonly style="width:100%; padding:8px; margin-bottom:10px;" placeholder="Generated invite link will appear here" />
+        <h3>Active/new invites</h3>
+        <ul id="invitesList" style="list-style:none; padding-left:0;"></ul>
+        <h3>Assign admin</h3>
+        <input id="adminTargetNickname" placeholder="Existing user nickname" style="width:100%; padding:8px; margin-bottom:8px;" />
+        <button id="setAdminBtn" style="width:100%;">Set as Admin</button>
+        <p id="adminStatus" style="margin-top:8px; color:#e0d07a;"></p>
       </div>
 
       <div class="achievements-section">
@@ -362,6 +374,65 @@
 
       // Load achievements on page load
       loadAchievements();
+
+      // Admin-specific flow
+      const isAdmin = localStorage.getItem('admin') === 'true';
+      if (isAdmin) {
+        document.getElementById('adminPanel').style.display = 'block';
+        socket.emit('get invites');
+      }
+
+      function renderInvites(invites) {
+        const list = document.getElementById('invitesList');
+        list.innerHTML = '';
+        invites.forEach(inv => {
+          const item = document.createElement('li');
+          item.style.padding = '6px 0';
+          item.style.borderBottom = '1px solid rgba(255,255,255,0.12)';
+          item.innerHTML = `
+            <strong>${inv.code}</strong> - ${inv.used ? 'Used by ' + inv.usedBy : 'Available'}<br>
+            created by ${inv.createdBy} @ ${new Date(inv.createdAt).toLocaleString()}
+          `;
+          list.appendChild(item);
+        });
+      }
+
+      document.getElementById('generateInviteBtn').addEventListener('click', () => {
+        socket.emit('generate invite');
+      });
+
+      document.getElementById('setAdminBtn').addEventListener('click', () => {
+        const target = document.getElementById('adminTargetNickname').value.trim();
+        if (!target) return;
+        socket.emit('set admin', target);
+      });
+
+      socket.on('invite generated', (data) => {
+        document.getElementById('generatedInviteLink').value = `${window.location.origin}/?invite=${data.code}`;
+        socket.emit('get invites');
+      });
+
+      socket.on('invites list', (invites) => {
+        renderInvites(invites);
+      });
+
+      socket.on('invite error', msg => {
+        document.getElementById('adminStatus').textContent = msg;
+      });
+
+      socket.on('admin updated', (target) => {
+        document.getElementById('adminStatus').textContent = `${target} is now admin.`;
+        if (target === nickname) {
+          localStorage.setItem('admin', 'true');
+        } else {
+          localStorage.setItem('admin', 'false');
+          document.getElementById('adminPanel').style.display = 'none';
+        }
+      });
+
+      socket.on('admin error', msg => {
+        document.getElementById('adminStatus').textContent = msg;
+      });
 
       // Listen for avatar changes via socket
       socket.on('connect', () => {
