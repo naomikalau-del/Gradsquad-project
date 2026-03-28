@@ -1,11 +1,4 @@
 // sidebar.js
-if (!window.musicScriptLoaded) {
-  const script = document.createElement("script");
-  script.src = "/music.js";
-  script.defer = true;
-  document.head.appendChild(script);
-  window.musicScriptLoaded = true;
-}
 
 async function loadSidebar(showBackButton = true){
   const sidebar = document.createElement("aside");
@@ -16,48 +9,11 @@ async function loadSidebar(showBackButton = true){
     <h2>All Users</h2>
     <div id="onlineList">Loading...</div>
     ${showBackButton ? `<button onclick="goDashboard()">Back to Dashboard</button>` : ""}
-    <div id="musicToggleIcon" style="
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        cursor: pointer;
-        font-size: 24px;
-    ">🔊</div>
   `;
 
   document.body.prepend(sidebar);
 
   loadOnlineUsers();
-
-  // Wait until music.js is loaded
-  const waitForMusic = setInterval(() => {
-    if (typeof initMusic === "function" && !window.musicStarted) {
-      initMusic();
-      window.musicStarted = true;
-
-      // Attach emoji toggle
-      const toggleIcon = document.getElementById("musicToggleIcon");
-let isMuted = false; // track mute state
-
-if (toggleIcon) {
-  toggleIcon.addEventListener("click", () => {
-    if (!window.audio) return;
-
-    if (isMuted) {
-      window.audio.play();
-      toggleIcon.textContent = "🔊";
-      isMuted = false;
-    } else {
-      window.audio.pause();
-      toggleIcon.textContent = "🔇";
-      isMuted = true;
-    }
-  });
-}
-
-      clearInterval(waitForMusic);
-    }
-  }, 100);
 
   // Socket for online users
   const socket = io();
