@@ -132,16 +132,27 @@
       loadSidebar(true);
 
       const nickname = localStorage.getItem('nickname');
+      const debugLine = document.createElement('div');
+      debugLine.style.margin = '10px 0';
+      debugLine.style.color = '#f8f8f8';
+      debugLine.style.fontSize = '12px';
+      document.querySelector('.container').prepend(debugLine);
+
       if (!nickname) {
+        debugLine.textContent = 'No logged user, redirecting to login...';
         window.location.href = '/';
         return;
       }
 
+      debugLine.textContent = `Logged in as ${nickname}, fetching achievements...`;
+
       async function loadAchievements() {
         try {
           const res = await fetch(`/achievements/${nickname}`);
+          debugLine.textContent = `API status ${res.status} ${res.statusText}`;
           if (!res.ok) throw new Error('Failed to load achievements');
           const achievements = await res.json();
+          debugLine.textContent = `Loaded ${Array.isArray(achievements) ? achievements.length : 0} achievement entries`;
           if (!Array.isArray(achievements) || achievements.length === 0) {
             document.getElementById('achievementsList').innerHTML = '<p>No achievements available yet. Keep doing things to unlock badges!</p>';
             return;
@@ -149,6 +160,7 @@
           renderAchievements(achievements);
         } catch (err) {
           document.getElementById('achievementsList').textContent = 'Error loading achievements.';
+          debugLine.textContent = 'Failed to load achievements: ' + err.message;
           console.error(err);
         }
       }
