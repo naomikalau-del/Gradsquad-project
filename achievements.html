@@ -138,14 +138,6 @@
       debugLine.style.fontSize = '12px';
       document.querySelector('.container').prepend(debugLine);
 
-      if (!nickname) {
-        debugLine.textContent = 'No logged user, redirecting to login...';
-        window.location.href = '/';
-        return;
-      }
-
-      debugLine.textContent = `Logged in as ${nickname}, fetching achievements...`;
-
       async function loadAchievements() {
         try {
           const res = await fetch(`/achievements/${nickname}`);
@@ -167,7 +159,7 @@
 
       function renderAchievements(achievements) {
         const container = document.getElementById('achievementsList');
-        if (!achievements || achievements.length ===0) {
+        if (!achievements || achievements.length === 0) {
           container.innerHTML = '<p>No achievements yet. Do more to unlock badges!</p>';
           return;
         }
@@ -189,7 +181,13 @@
         }).join('');
       }
 
-      loadAchievements();
+      if (!nickname) {
+        debugLine.textContent = 'No logged user, redirecting to login...';
+        window.location.href = '/';
+      } else {
+        debugLine.textContent = `Logged in as ${nickname}, fetching achievements...`;
+        loadAchievements();
+      }
     </script>
   </body>
 </html>
