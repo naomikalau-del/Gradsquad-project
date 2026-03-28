@@ -292,7 +292,7 @@ const achievementDefs = {
   'Photo Enthusiast': { emoji: '⭐', thresholds: [5, 10, 30], stat: 'photoCount' },
   'Social Butterfly': { emoji: '🦋', thresholds: [25, 75, 200], stat: 'messageCount' },
   'Planner': { emoji: '📋', thresholds: [3, 10, 25], stat: 'eventCount' },
-  'Chameleon': { emoji: '🦎', thresholds: [7], stat: 'avatarChanges' }
+  'Chameleon': { emoji: '🦎', thresholds: [7, 15, 30], stat: 'avatarChanges' }
 };
 
 function calculateAchievements(nickname) {
