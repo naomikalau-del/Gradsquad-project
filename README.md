@@ -1,34 +1,57 @@
-# 🎓 Gradsquad
+# Project Name
 
-## 📖 Overview
-Gradsquad is a class community web app built for my graduating year.  
-It allows classmates to connect, chat, share photos, plan events, and create custom profiles.  
-This project is part of my portfolio for Yonsei University, showing creativity, teamwork, and web development skills.
+a platform for my classmates and i to connect, plan get-togethers and have fun. 
 
-## 🚀 Features
-- Custom user profiles
-- Chat and messaging system
-- Event planning (class outings, birthdays, etc.)
+# Preview
+
+Below are some screenshots of the application interface.
+
+## Home
+![Home](assets/home.png)
+
+## Dashboard
+![Dashboard](assets/dashboard.png)
+
+## Planner
+![Planner](assets/planner.png)
+
+## Calendar
+![Calendar](assets/calendar.png)
+
+## Chat
+![Chat](assets/chat.png)
+
+## Profile
+![Profile](assets/profile.png)
+
+## Settings
+![Settings](assets/settings.png)
+
+## Birthday Feature
+![Birthday](assets/birthday.png)
+
+## Photos
+![Photos](assets/photos.png)
+
+---
+
+# Features
+
+- Event planner
+- Calendar integration
+- Chat system
+- Profile management
+- Birthday reminders
 - Photo sharing
-- Responsive design for desktop and mobile
 
-## 🛠️ Tech Stack
-- HTML, CSS, JavaScript
-- PHP (backend logic)
-- MySQL (database)
-- VS Code + GitHub for collaboration
+---
 
-## 📸 Screenshots
-Here’s a preview of Gradsquad so far:
+# Installation
 
-![Gradsquad Dashboard](assets/dashboard.png)
+Clone the repository:
 
-*(Save your screenshot in an `assets/` folder inside the repo, then reference it here.  
-You can add more screenshots like `assets/login.png` or `assets/events.png` and stack them below.)*
-
-## 📂 Installation
-To run locally:
 ```bash
 git clone https://github.com/naomikalau-del/Gradsquad-project.git
 cd Gradsquad-project
 # Open with localhost or your preferred server
+ your preferred server
