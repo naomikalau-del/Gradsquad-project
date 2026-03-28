@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Gradsquad - Achievements</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      :root {
+        --bg:#0f1416;
+        --card:#15191b;
+        --card-2:#0d1112;
+        --muted:#8f9aa0;
+        --text:#eef2f3;
+        --accent:#2a9d8f;
+        --sidebar-width:220px;
+      }
+
+      html, body {
+        height:100%;
+        margin:0;
+        font-family: Inter, Arial, sans-serif;
+        background: linear-gradient(180deg, #0b0d0e 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      header.app-header {
+        position: fixed;
+        top:0;
+        left: var(--sidebar-width);
+        right:0;
+        height: 68px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+        backdrop-filter: blur(6px);
+        z-index: 999;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+      }
+
+      main.container {
+        max-width: 900px;
+        margin: 92px auto 40px;
+        margin-left: calc(var(--sidebar-width) + 20px);
+        padding: 24px;
+        background: var(--card);
+        border-radius: 12px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+      }
+
+      h2 {
+        margin: 0 0 16px 0;
+      }
+
+      .achievement-item {
+        background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+        border: 1px solid rgba(42,157,143,0.14);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 14px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:14px;
+      }
+
+      .achievement-details {
+        flex: 1;
+      }
+
+      .achievement-title {
+        font-size: 16px;
+        font-weight:700;
+        margin-bottom:4px;
+      }
+
+      .achievement-meta {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .progress-wrap {
+        margin-top: 10px;
+        height: 10px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .progress-inner {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #16a34a, #2a9d8f);
+        width: 0%;
+        transition: width .4s ease;
+      }
+
+      .badge {
+        display: flex;
+        align-items:center;
+        gap:6px;
+        margin-left:14px;
+        font-size:14px;
+        font-weight:700;
+      }
+
+      .badge.done { color: #22c55e; }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #6b7280;
+      }
+
+      .status-dot.done { background: #22c55e; }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Achievements</h1>
+    </header>
+
+    <main class="container">
+      <h2>Your progress</h2>
+      <div id="achievementsList">Loading achievements...</div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+      loadSidebar(true);
+
+      const nickname = localStorage.getItem('nickname');
+      if (!nickname) {
+        window.location.href = '/';
+        return;
+      }
+
+      async function loadAchievements() {
+        try {
+          const res = await fetch(`/achievements/${nickname}`);
+          if (!res.ok) throw new Error('Failed to load achievements');
+          const achievements = await res.json();
+          renderAchievements(achievements);
+        } catch (err) {
+          document.getElementById('achievementsList').textContent = 'Error loading achievements.';
+          console.error(err);
+        }
+      }
+
+      function renderAchievements(achievements) {
+        const container = document.getElementById('achievementsList');
+        if (!achievements || achievements.length ===0) {
+          container.innerHTML = '<p>No achievements yet. Do more to unlock badges!</p>';
+          return;
+        }
+
+        container.innerHTML = achievements.map(a => {
+          const progressValue = Math.min(100, Math.round((a.progress / a.threshold) * 100));
+          const done = a.progress >= a.threshold;
+          return `
+            <div class="achievement-item">
+              <div class="achievement-details">
+                <div class="achievement-title">${a.emoji} ${a.name}</div>
+                <div class="achievement-meta">${a.progress}/${a.threshold} points</div>
+                <div class="progress-wrap"><div class="progress-inner" style="width:${progressValue}%"></div></div>
+              </div>
+              <div class="badge ${done ? 'done' : ''}">
+                <span class="status-dot ${done ? 'done' : ''}"></span>${done ? 'Completed' : 'In Progress'}
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      loadAchievements();
+    </script>
+  </body>
+</html>

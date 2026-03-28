@@ -154,6 +154,7 @@ app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'settings.h
 app.get('/calendar', (req, res) => res.sendFile(path.join(__dirname, 'calendar.html')));
 app.get('/planning', (req, res) => res.sendFile(path.join(__dirname, 'planning.html')));
 app.get('/photoalbum', (req, res) => res.sendFile(path.join(__dirname, 'photoalbum.html')));
+app.get('/achievements', (req, res) => res.sendFile(path.join(__dirname, 'achievements.html')));
 app.get('/users', (req, res) => res.json(users));
 app.get('/online-users', (req, res) => {
   const onlineList = Array.from(onlineUsers).map(nickname => ({ nickname }));
