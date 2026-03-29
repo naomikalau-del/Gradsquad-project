@@ -1,5 +1,4 @@
 # Ignore user data (contains passwords)
-users.json
 
 # Ignore private backup file
 original.html
