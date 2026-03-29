@@ -145,8 +145,65 @@
 
     <script src="https://gradsquad-project.onrender.com/socket.io/socket.io.js"></script>
     <script>
+      if (typeof io === 'undefined') {
+        console.warn('socket.io client not loaded from backend; loading CDN fallback');
+        const fallback = document.createElement('script');
+        fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js';
+        fallback.onload = () => {
+          console.log('socket.io client fallback loaded');
+          initSocket();
+        };
+        document.head.appendChild(fallback);
+      } else {
+        initSocket();
+      }
+
       const API_BASE_URL = 'https://gradsquad-project.onrender.com';
-      const socket = io(API_BASE_URL);
+      let socket;
+      function initSocket() {
+        socket = io(API_BASE_URL);
+        console.log('socket initialized', socket ? 'ok' : 'fail');
+
+        socket.on('connect', () => console.log('socket connected'));
+        socket.on('connect_error', (err) => console.error('socket connect_error', err));
+        socket.on('disconnect', (reason) => console.warn('socket disconnected', reason));
+
+        socket.on('signup success', (user) => {
+          console.log('signup success', user);
+          localStorage.setItem('nickname', user.nickname);
+          localStorage.setItem('birthdate', user.birthdate);
+          localStorage.setItem('color', user.color);
+          localStorage.setItem('avatar', user.avatar);
+          localStorage.setItem('admin', user.admin ? 'true' : 'false');
+          window.location.href = 'dashboard.html';
+        });
+
+        socket.on('login success', (user) => {
+          console.log('login success', user);
+          localStorage.setItem('nickname', user.nickname);
+          localStorage.setItem('birthdate', user.birthdate);
+          localStorage.setItem('color', user.color);
+          localStorage.setItem('avatar', user.avatar);
+          localStorage.setItem('admin', user.admin ? 'true' : 'false');
+          window.location.href = 'dashboard.html';
+        });
+
+        socket.on('signup error', msg => {
+          console.error('signup error', msg);
+          alert(msg);
+        });
+
+        socket.on('login error', msg => {
+          console.error('login error', msg);
+          alert(msg);
+        });
+
+        socket.on('available colors', colors => {
+          if (Array.isArray(colors) && colors.length) {
+            populateColors(colors);
+          }
+        });
+      }
 
       // Fallback color list (used immediately so select is never empty)
       const fallbackColors = [
@@ -198,14 +255,6 @@
       // Immediately populate with fallback so the control is usable even if socket event is delayed
       populateColors(fallbackColors);
 
-      // If server sends available colors, replace the options
-      socket.on('available colors', colors => {
-        if (Array.isArray(colors) && colors.length) {
-          // Expecting array of { name, hex }
-          populateColors(colors);
-        }
-      });
-
       // Pre-fill invite code from URL (e.g. /?invite=CODE)
       const urlParams = new URLSearchParams(window.location.search);
       const inviteFromUrl = urlParams.get('invite');
@@ -234,38 +283,7 @@
         });
       });
 
-      // Redirect to dashboard on success
-      socket.on('signup success', (user) => {
-        localStorage.setItem('nickname', user.nickname);
-        localStorage.setItem('birthdate', user.birthdate);
-        localStorage.setItem('color', user.color);
-        localStorage.setItem('avatar', user.avatar);
-        localStorage.setItem('admin', user.admin ? 'true' : 'false');
-        window.location.href = "dashboard.html";
-      });
-
-      socket.on('login success', (user) => {
-        console.log('login success event', user);
-        localStorage.setItem('nickname', user.nickname);
-        localStorage.setItem('birthdate', user.birthdate);
-        localStorage.setItem('color', user.color);
-        localStorage.setItem('avatar', user.avatar);
-        localStorage.setItem('admin', user.admin ? 'true' : 'false');
-        window.location.href = "dashboard.html";
-      });
-
-      socket.on('signup error', msg => {
-        console.error('signup error', msg);
-        alert(msg);
-      });
-      socket.on('login error', msg => {
-        console.error('login error', msg);
-        alert(msg);
-      });
-
-      socket.on('connect', () => console.log('socket connected'));
-      socket.on('connect_error', (err) => console.error('socket connect_error', err));
-      socket.on('disconnect', (reason) => console.warn('socket disconnected', reason));
+      // socket handlers are configured inside initSocket() after io loads and connects.
     </script>
   </body>
 </html>
