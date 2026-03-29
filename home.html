@@ -241,7 +241,7 @@
         localStorage.setItem('color', user.color);
         localStorage.setItem('avatar', user.avatar);
         localStorage.setItem('admin', user.admin ? 'true' : 'false');
-        window.location.href = "/dashboard";
+        window.location.href = "dashboard.html";
       });
 
       socket.on('login success', (user) => {
@@ -250,7 +250,7 @@
         localStorage.setItem('color', user.color);
         localStorage.setItem('avatar', user.avatar);
         localStorage.setItem('admin', user.admin ? 'true' : 'false');
-        window.location.href = "/dashboard";
+        window.location.href = "dashboard.html";
       });
 
       socket.on('signup error', msg => alert(msg));

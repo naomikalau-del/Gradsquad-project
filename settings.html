@@ -199,7 +199,7 @@
     document.getElementById('newColor').value = color;
 
     document.getElementById('cancelBtn').addEventListener('click', () => {
-      window.location.href = '/dashboard';
+      window.location.href = 'dashboard.html';
     });
 
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
@@ -254,7 +254,7 @@
         feedback.textContent = 'Settings updated successfully.';
         feedback.classList.add('success');
 
-        setTimeout(() => window.location.href = '/dashboard', 900);
+        setTimeout(() => window.location.href = 'dashboard.html', 900);
       } catch (err) {
         feedback.textContent = 'Network error. Try again.';
         feedback.classList.add('error');

@@ -29,7 +29,7 @@ async function loadSidebar(showBackButton = true){
 }
 
 function goDashboard(){
-  window.location.href="/dashboard";
+  window.location.href="dashboard.html";
 }
 
 async function loadOnlineUsers(){
