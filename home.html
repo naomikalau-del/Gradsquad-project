@@ -264,9 +264,17 @@
       }
 
       // Form handlers
+      function emitOrAlert(event, payload) {
+        if (!socket || !socket.connected) {
+          alert('Not connected to backend. Please refresh and ensure backend is reachable.');
+          return;
+        }
+        socket.emit(event, payload);
+      }
+
       document.getElementById('signupForm').addEventListener('submit', e => {
         e.preventDefault();
-        socket.emit('signup', {
+        emitOrAlert('signup', {
           nickname: document.getElementById('signupNickname').value,
           password: document.getElementById('signupPassword').value,
           birthdate: document.getElementById('signupBirthdate').value,
@@ -277,7 +285,7 @@
 
       document.getElementById('loginForm').addEventListener('submit', e => {
         e.preventDefault();
-        socket.emit('login', {
+        emitOrAlert('login', {
           nickname: document.getElementById('loginNickname').value,
           password: document.getElementById('loginPassword').value
         });
