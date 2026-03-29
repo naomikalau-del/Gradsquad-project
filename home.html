@@ -145,6 +145,9 @@
 
     <script src="https://gradsquad-project.onrender.com/socket.io/socket.io.js"></script>
     <script>
+      const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+      let socket;
+
       if (typeof io === 'undefined') {
         console.warn('socket.io client not loaded from backend; loading CDN fallback');
         const fallback = document.createElement('script');
@@ -157,9 +160,6 @@
       } else {
         initSocket();
       }
-
-      const API_BASE_URL = 'https://gradsquad-project.onrender.com';
-      let socket;
       function initSocket() {
         socket = io(API_BASE_URL);
         console.log('socket initialized', socket ? 'ok' : 'fail');
