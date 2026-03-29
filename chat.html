@@ -228,7 +228,8 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="sidebar.js"></script>
   <script>
-    const socket = io();
+    const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+    const socket = io(API_BASE_URL);
     const nickname = localStorage.getItem('nickname');
     let notificationShown = false; // Track if notification was shown for current batch
     

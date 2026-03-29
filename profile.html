@@ -285,7 +285,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="sidebar.js"></script>
     <script>
-      const socket = io();
+      const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+      const socket = io(API_BASE_URL);
       loadSidebar(true);
 
       const nickname = localStorage.getItem('nickname') || '-';
@@ -324,7 +325,7 @@
         formData.append('nickname', nickname);
 
         try {
-          const res = await fetch('/upload-avatar', { method: 'POST', body: formData });
+          const res = await fetch(`${API_BASE_URL}/upload-avatar`, { method: 'POST', body: formData });
           const data = await res.json();
 
           if (data.success) {
@@ -343,7 +344,7 @@
       // Load achievements
       async function loadAchievements() {
         try {
-          const res = await fetch(`/achievements/${nickname}`);
+          const res = await fetch(`${API_BASE_URL}/achievements/${nickname}`);
           const achievements = await res.json();
           renderAchievements(achievements);
         } catch (err) {

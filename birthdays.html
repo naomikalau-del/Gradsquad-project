@@ -158,13 +158,14 @@ main.container{
 <script src="/socket.io/socket.io.js"></script>
 <script src="sidebar.js"></script>
 <script>
-const socket = io();
+const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+const socket = io(API_BASE_URL);
 
 loadSidebar(true);
 
 // --- Birthday list ---
 async function loadBirthdays(){
-  const res = await fetch('/users');
+  const res = await fetch(`${API_BASE_URL}/users`);
   const users = await res.json();
 
   const list = document.getElementById('birthdayList');

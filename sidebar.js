@@ -1,5 +1,7 @@
 // sidebar.js
 
+const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+
 async function loadSidebar(showBackButton = true){
   const sidebar = document.createElement("aside");
   sidebar.className = "sidebar";
@@ -16,7 +18,7 @@ async function loadSidebar(showBackButton = true){
   loadOnlineUsers();
 
   // Socket for online users
-  const socket = io();
+  const socket = io(API_BASE_URL);
   const nickname = localStorage.getItem('nickname');
   if (nickname) {
     socket.emit('set user', { nickname });
@@ -32,9 +34,9 @@ function goDashboard(){
 
 async function loadOnlineUsers(){
   try{
-    const allUsersRes = await fetch('/users');
+    const allUsersRes = await fetch(`${API_BASE_URL}/users`);
     const allUsers = await allUsersRes.json();
-    const onlineRes = await fetch('/online-users');
+    const onlineRes = await fetch(`${API_BASE_URL}/online-users`);
     const onlineUsers = await onlineRes.json();
     updateUserList(onlineUsers.map(u => u.nickname), allUsers);
   }catch(err){
@@ -48,7 +50,7 @@ function updateUserList(onlineNicknames = [], allUsers = null) {
 
   const showOffline = async () => {
     if (!allUsers) {
-      const res = await fetch('/users');
+      const res = await fetch(`${API_BASE_URL}/users`);
       allUsers = await res.json();
     }
 

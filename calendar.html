@@ -240,14 +240,15 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="sidebar.js"></script>
 <script>
+const API_BASE_URL = 'https://gradsquad-project.onrender.com';
 loadSidebar(true);
-const socket = io();
+const socket = io(API_BASE_URL);
 let allUsers = [];
 
 // Load all users for attendee selection
 async function loadAllUsers() {
   try {
-    const res = await fetch('/users');
+    const res = await fetch(`${API_BASE_URL}/users`);
     const usersObj = await res.json();
     allUsers = Object.keys(usersObj);
     renderAttendeesList();
@@ -269,7 +270,7 @@ function renderAttendeesList() {
 // Load events
 async function loadEvents() {
   try {
-    const res = await fetch('/events');
+    const res = await fetch(`${API_BASE_URL}/events`);
     const events = await res.json();
     renderEvents(events);
   } catch (err) {
@@ -355,7 +356,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
   });
 
   try {
-    const res = await fetch('/events', {
+    const res = await fetch(`${API_BASE_URL}/events`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ title,date,time,creator,type:'custom',attendees })

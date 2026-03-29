@@ -187,7 +187,8 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="sidebar.js"></script>
   <script>
-    const socket = io();
+    const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+    const socket = io(API_BASE_URL);
     
     loadSidebar(true);
 
@@ -234,7 +235,7 @@
       };
 
       try {
-        const res = await fetch('/update-account', {
+        const res = await fetch(`${API_BASE_URL}/update-account`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)

@@ -247,7 +247,8 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="sidebar.js"></script>
   <script>
-    const socket = io();
+    const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+    const socket = io(API_BASE_URL);
     const nickname = localStorage.getItem('nickname');
     let eventId = null; // To be set when selecting an event
     let isPollActive = true; // Track if poll is still active
@@ -257,7 +258,7 @@
     // Load places on page load
     async function loadPlaces() {
       try {
-        const res = await fetch('/places');
+        const res = await fetch(`${API_BASE_URL}/places`);
         const places = await res.json();
         renderPlaces(places);
         checkPollStatus();
@@ -269,7 +270,7 @@
     // Load times on page load
     async function loadTimes() {
       try {
-        const res = await fetch('/times');
+        const res = await fetch(`${API_BASE_URL}/times`);
         const times = await res.json();
         renderTimes(times);
       } catch (err) {
@@ -339,7 +340,7 @@
       }
 
       try {
-        const res = await fetch('/places', {
+        const res = await fetch(`${API_BASE_URL}/places`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: place })
@@ -357,7 +358,7 @@
 
     async function votePlace(placeId) {
       try {
-        const res = await fetch(`/places/${placeId}/vote`, {
+        const res = await fetch(`${API_BASE_URL}/places/${placeId}/vote`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nickname })
@@ -382,7 +383,7 @@
       }
 
       try {
-        const res = await fetch('/times', {
+        const res = await fetch(`${API_BASE_URL}/times`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ time, nickname })

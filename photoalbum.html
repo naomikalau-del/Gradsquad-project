@@ -333,7 +333,8 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="sidebar.js"></script>
   <script>
-    const socket = io();
+    const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+    const socket = io(API_BASE_URL);
     const nickname = localStorage.getItem('nickname');
     
     loadSidebar(true);
@@ -347,7 +348,7 @@
     // Load photos
     async function loadPhotos() {
       try {
-        const res = await fetch('/photos');
+        const res = await fetch(`${API_BASE_URL}/photos`);
         const photos = await res.json();
         renderPhotos(photos);
       } catch (err) {
@@ -415,7 +416,7 @@
 
       try {
         document.getElementById('uploadBtn').disabled = true;
-        const res = await fetch('/upload-photo', {
+        const res = await fetch(`${API_BASE_URL}/upload-photo`, {
           method: 'POST',
           body: formData
         });

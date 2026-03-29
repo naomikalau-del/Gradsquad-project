@@ -145,7 +145,8 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      const socket = io();
+      const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+      const socket = io(API_BASE_URL);
 
       // Fallback color list (used immediately so select is never empty)
       const fallbackColors = [
