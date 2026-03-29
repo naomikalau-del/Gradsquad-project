@@ -1,0 +1,16 @@
+{
+  "Annabe_boo": {
+    "password": "Bbl006",
+    "birthdate": "2011-04-07",
+    "color": "#9d2a30",
+    "avatar": "/uploads/9a85afe80545865b4562d7b805a5308b",
+    "admin": true
+  },
+  "Adilicious": {
+    "password": "0123456",
+    "birthdate": "1989-08-28",
+    "color": "#fb7185",
+    "avatar": "/uploads/0a18b3140438e9c5894e009aa40dc8d0",
+    "avatarChanges": 1
+  }
+}
