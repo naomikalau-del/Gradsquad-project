@@ -201,7 +201,7 @@
 
       if (!nickname) {
         debugLine.textContent = 'No logged user, redirecting to login...';
-        window.location.href = '/';
+        window.location.href = 'home.html';
       } else {
         debugLine.textContent = `Logged in as ${nickname}, fetching achievements...`;
         loadAchievements();
