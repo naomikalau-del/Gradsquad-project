@@ -292,14 +292,14 @@
         const action = card.dataset.action;
 
         switch (action) {
-          case 'profile': window.location.href = '/profile'; break;
-          case 'chat': window.location.href = '/chat'; break;
-          case 'settings': window.location.href = '/settings'; break;
-          case 'calendar': window.location.href = '/calendar'; break;
-          case 'birthdays': window.location.href = '/birthdays'; break;
-          case 'planning': window.location.href = '/planning'; break;
-          case 'photoalbum': window.location.href = '/photoalbum'; break;
-          case 'progress': window.location.href = '/achievements'; break;
+          case 'profile': window.location.href = 'profile.html'; break;
+          case 'chat': window.location.href = 'chat.html'; break;
+          case 'settings': window.location.href = 'settings.html'; break;
+          case 'calendar': window.location.href = 'calendar.html'; break;
+          case 'birthdays': window.location.href = 'birthdays.html'; break;
+          case 'planning': window.location.href = 'planning.html'; break;
+          case 'photoalbum': window.location.href = 'photoalbum.html'; break;
+          case 'progress': window.location.href = 'achievements.html'; break;
           case 'placeholder': alert('Placeholder feature'); break;
           default: alert(action + ' clicked'); break;
         }
@@ -307,7 +307,7 @@
 
       document.getElementById('btnLogout').addEventListener('click', () => {
         localStorage.clear();
-        window.location.href = '/';
+        window.location.href = 'home.html';
       });
     </script>
   </body>
