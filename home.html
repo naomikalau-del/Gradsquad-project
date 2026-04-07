@@ -143,23 +143,30 @@
       </div>
     </div>
 
-    <script src="https://gradsquad-project.onrender.com/socket.io/socket.io.js"></script>
     <script>
-      const API_BASE_URL = 'https://gradsquad-project.onrender.com';
-      let socket;
+      const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3000'
+        : 'https://gradsquad-project.onrender.com';
 
-      if (typeof io === 'undefined') {
-        console.warn('socket.io client not loaded from backend; loading CDN fallback');
+      const socketScript = document.createElement('script');
+      socketScript.src = `${API_BASE_URL}/socket.io/socket.io.js`;
+      socketScript.onload = () => {
+        console.log('socket.io client loaded from', socketScript.src);
+        if (typeof initSocket === 'function') initSocket();
+      };
+      socketScript.onerror = () => {
+        console.warn('socket.io load failed, using CDN fallback');
         const fallback = document.createElement('script');
         fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js';
         fallback.onload = () => {
           console.log('socket.io client fallback loaded');
-          initSocket();
+          if (typeof initSocket === 'function') initSocket();
         };
         document.head.appendChild(fallback);
-      } else {
-        initSocket();
-      }
+      };
+      document.head.appendChild(socketScript);
+
+      let socket;
       function initSocket() {
         socket = io(API_BASE_URL);
         console.log('socket initialized', socket ? 'ok' : 'fail');

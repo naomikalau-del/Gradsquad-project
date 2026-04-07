@@ -244,10 +244,10 @@
     </div>
   </main>
 
-  <script src="https://gradsquad-project.onrender.com/socket.io/socket.io.js"></script>
+  <script src="appConfig.js"></script>
   <script src="sidebar.js"></script>
   <script>
-    const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+    // API_BASE_URL is global from appConfig.js
     const socket = io(API_BASE_URL);
     const nickname = localStorage.getItem('nickname');
     let eventId = null; // To be set when selecting an event

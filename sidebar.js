@@ -1,6 +1,6 @@
 // sidebar.js
 
-const API_BASE_URL = 'https://gradsquad-project.onrender.com';
+// sidebar.js now depends on appConfig.js to set window.API_BASE_URL and socket loader.
 
 async function loadSidebar(showBackButton = true){
   const sidebar = document.createElement("aside");
@@ -17,15 +17,20 @@ async function loadSidebar(showBackButton = true){
 
   loadOnlineUsers();
 
-  // Socket for online users
-  const socket = io(API_BASE_URL);
-  const nickname = localStorage.getItem('nickname');
-  if (nickname) {
-    socket.emit('set user', { nickname });
-  }
-  socket.on('online users', (onlineList) => {
-    updateUserList(onlineList);
-  });
+  // Socket for online users (wait until socket client is loaded)
+  ensureSocketConnected()
+    .then((socket) => {
+      const nickname = localStorage.getItem('nickname');
+      if (nickname) {
+        socket.emit('set user', { nickname });
+      }
+      socket.on('online users', (onlineList) => {
+        updateUserList(onlineList);
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to initialize sidebar socket:', err);
+    });
 }
 
 function goDashboard(){
