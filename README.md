@@ -7,7 +7,7 @@ a platform for my best friends and i to connect, plan get-togethers and have fun
 Below are some screenshots of the application interface.
 
 ## Home
-![Home](assets/home.png)
+![Home](assets/login%20page.png)
 
 ## Dashboard
 ![Dashboard](assets/dashboard.png)
@@ -19,19 +19,21 @@ Below are some screenshots of the application interface.
 ![Calendar](assets/calendar.png)
 
 ## Chat
-![Chat](assets/chat.png)
+![Chat 1](assets/chat%201.png)
+![Chat 2](assets/chat%202.png)
 
 ## Profile
-![Profile](assets/profile.png)
+![Profile 1](assets/profile%201.png)
+![Profile 2](assets/profile%202.png)
 
 ## Settings
 ![Settings](assets/settings.png)
 
 ## Birthday Feature
-![Birthday](assets/birthday.png)
+![Birthday](assets/birthdays.png)
 
 ## Photos
-![Photos](assets/photos.png)
+![Photos](assets/photo%20album.png)
 
 ---
 

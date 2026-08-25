@@ -5,7 +5,6 @@
 async function loadSidebar(showBackButton = true){
   const sidebar = document.createElement("aside");
   sidebar.className = "sidebar";
-  sidebar.style.position = "relative"; // needed for bottom-left icon
 
   sidebar.innerHTML = `
     <h2>All Users</h2>
