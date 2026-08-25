@@ -8,6 +8,7 @@ const path = require('path');
 const multer = require('multer');
 const cors = require("cors"); 
 const { createClient } = require('@supabase/supabase-js');
+const bcrypt = require('bcrypt');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -121,10 +122,22 @@ function usersFromRows(rows) {
   }]));
 }
 
+function publicUser(nickname, user) {
+  const { password, ...safeUser } = user;
+  return { nickname, ...safeUser };
+}
+
 async function loadUsersFromSupabase() {
   const { data, error } = await supabase.from('users').select('*');
   if (error) throw error;
   if (Array.isArray(data) && data.length) users = usersFromRows(data);
+
+  for (const [nickname, user] of Object.entries(users)) {
+    if (!user.password.startsWith('$2')) {
+      user.password = await bcrypt.hash(user.password, 12);
+      await saveUserToSupabase(nickname, user);
+    }
+  }
 }
 
 async function saveUserToSupabase(nickname, user) {
@@ -356,7 +369,9 @@ app.get('/calendar', (req, res) => res.sendFile(path.join(__dirname, 'calendar.h
 app.get('/planning', (req, res) => res.sendFile(path.join(__dirname, 'planning.html')));
 app.get('/photoalbum', (req, res) => res.sendFile(path.join(__dirname, 'photoalbum.html')));
 app.get('/achievements', (req, res) => res.sendFile(path.join(__dirname, 'achievements.html')));
-app.get('/users', (req, res) => res.json(users));
+app.get('/users', (req, res) => {
+  res.json(Object.fromEntries(Object.entries(users).map(([nickname, user]) => [nickname, publicUser(nickname, user)])));
+});
 app.get('/online-users', (req, res) => {
   const onlineList = Array.from(onlineUsers).map(nickname => ({ nickname }));
   res.json(onlineList);
@@ -402,7 +417,7 @@ app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
 app.post('/update-account', async (req, res) => {
   const { oldNickname, currentPassword, newNickname, newColor, newPassword } = req.body;
   const user = users[oldNickname];
-  if (!user || user.password !== currentPassword) return res.json({ success: false, message: 'Invalid credentials.' });
+  if (!user || !(await bcrypt.compare(currentPassword, user.password))) return res.json({ success: false, message: 'Invalid credentials.' });
 
   let resultNick = oldNickname;
   if (newNickname && newNickname !== oldNickname) {
@@ -417,7 +432,7 @@ app.post('/update-account', async (req, res) => {
     reserveColor(newColor);
     users[resultNick].color = newColor;
   }
-  if (newPassword) users[resultNick].password = newPassword;
+  if (newPassword) users[resultNick].password = await bcrypt.hash(newPassword, 12);
 
   try {
     if (resultNick !== oldNickname) {
@@ -692,7 +707,7 @@ io.on('connection', (socket) => {
     if (users[nickname]) return socket.emit('signup error', "Nickname taken!");
     if (!reserveColor(color)) return socket.emit('signup error', "Color not available.");
 
-    users[nickname] = { password, birthdate, color, avatar: "default.png", admin: false };
+    users[nickname] = { password: await bcrypt.hash(password, 12), birthdate, color, avatar: "default.png", admin: false };
     invites[inviteCode].used = true;
     invites[inviteCode].usedBy = nickname;
     invites[inviteCode].usedAt = new Date().toISOString();
@@ -716,7 +731,7 @@ io.on('connection', (socket) => {
     onlineUsers.add(nickname);
     io.emit('online users', Array.from(onlineUsers));
 
-    socket.emit('signup success', { nickname, ...users[nickname] });
+    socket.emit('signup success', publicUser(nickname, users[nickname]));
 
     // no system join message sent
   });
@@ -725,7 +740,7 @@ io.on('connection', (socket) => {
   socket.on('login', async ({ nickname, password }) => {
     const { data, error } = await supabase.from('users').select('*').eq('nickname', nickname).maybeSingle();
     if (error) return socket.emit('login error', 'Unable to reach account database.');
-    if (!data || data.password !== password) return socket.emit('login error', "Invalid login.");
+    if (!data || !(await bcrypt.compare(password, data.password))) return socket.emit('login error', "Invalid login.");
 
     users[nickname] = usersFromRows([data])[nickname];
 
@@ -733,7 +748,7 @@ io.on('connection', (socket) => {
     socket.isLoggedIn = true;
     onlineUsers.add(nickname);
     io.emit('online users', Array.from(onlineUsers));
-    socket.emit('login success', { nickname, ...users[nickname] });
+    socket.emit('login success', publicUser(nickname, users[nickname]));
 
     // no system join message sent
   });

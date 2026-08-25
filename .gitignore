@@ -1,4 +1,5 @@
 # Ignore user data (contains passwords)
+users.json
 
 # Ignore private backup file
 original.html
@@ -15,3 +16,4 @@ node_modules/
 # OS junk
 .DS_Store
 Thumbs.db
+
