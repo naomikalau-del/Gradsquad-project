@@ -1,6 +1,6 @@
 # Project Name
 
-a platform for my classmates and i to connect, plan get-togethers and have fun. 
+a platform for my best friends and i to connect, plan get-togethers and have fun. 
 
 # Preview
 

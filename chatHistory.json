@@ -1,21 +1,25 @@
 [
   {
     "nickname": "Annabe_boo",
-    "text": "hiiiiii",
+    "text": "chat test. hii",
     "color": "#9d2a30",
     "system": false
   },
   {
-    "nickname": "Annabe_boo",
-    "text": "icleared the chat history",
-    "color": "#9d2a30",
-    "system": false
+    "text": "Annabe_boo left the chat",
+    "system": true
   },
   {
-    "nickname": "Annabe_boo",
-    "text": "ok bye",
-    "color": "#9d2a30",
-    "system": false
+    "text": "Annabe_boo joined the chat",
+    "system": true
+  },
+  {
+    "text": "Annabe_boo left the chat",
+    "system": true
+  },
+  {
+    "text": "Annabe_boo joined the chat",
+    "system": true
   },
   {
     "text": "Annabe_boo left the chat",
