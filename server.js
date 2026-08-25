@@ -62,7 +62,12 @@ const onlineUsers = new Set();
 // --- Load chat history ---
 let messages = [];
 if (fs.existsSync(historyFile)) {
-  try { messages = JSON.parse(fs.readFileSync(historyFile)); } catch { messages = []; }
+  try {
+    const parsedHistory = JSON.parse(fs.readFileSync(historyFile));
+    messages = Array.isArray(parsedHistory)
+      ? parsedHistory
+      : Array.isArray(parsedHistory.messages) ? parsedHistory.messages : [];
+  } catch { messages = []; }
 }
 
 // --- Load users ---

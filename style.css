@@ -242,3 +242,33 @@ button:hover {
   transform: translate(-50%, -50%);
   z-index: 1;
 }
+
+/* Let pages with long content scroll from their actual top. */
+body {
+  display: block;
+  height: auto !important;
+  min-height: 100%;
+  padding: 0;
+}
+
+main.container {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  position: relative;
+  left: 96px;
+  top: -96px;
+}
+
+.forms-container {
+  position: relative;
+  left: 96px;
+  top: -96px;
+}
+
+#main {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  position: relative;
+  left: 96px;
+  top: -96px;
+}

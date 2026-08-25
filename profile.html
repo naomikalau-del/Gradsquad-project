@@ -228,10 +228,6 @@
     </style>
   </head>
   <body>
-    <header class="app-header">
-      <h1>Profile</h1>
-    </header>
-
     <main class="container">
       <div class="profile-header">
         <div class="avatar-section">
@@ -289,6 +285,7 @@
       loadSidebar(true);
 
       const nickname = localStorage.getItem('nickname') || '-';
+      socket.emit('set user', { nickname });
 
       // Load user info
       document.getElementById('nickname').textContent = nickname;
