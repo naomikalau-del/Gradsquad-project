@@ -1,7 +1,9 @@
 // appConfig.js
 // Shared configuration for API origin and Socket.IO client loader
 
-window.API_BASE_URL = 'http://localhost:3000';
+window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+  ? 'http://localhost:3000'
+  : 'https://gradsquad-project.onrender.com';
 
 // Load socket.io client synchronously during initial page load. This avoids io undefined errors
 // in pages that assume it is available immediately after script tags.

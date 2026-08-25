@@ -168,7 +168,9 @@
     </div>
 
     <script>
-      const API_BASE_URL = 'http://localhost:3000';
+      const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+        ? 'http://localhost:3000'
+        : 'https://gradsquad-project.onrender.com';
 
       const socketScript = document.createElement('script');
       socketScript.src = `${API_BASE_URL}/socket.io/socket.io.js`;
