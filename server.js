@@ -72,6 +72,7 @@ const eventsFile = 'events.json';
 const placesFile = 'places.json';
 const timesFile = 'times.json';
 const photosFile = 'photos.json';
+const mediaBucket = 'gradsquad-media';
 
 // --- Track online users ---
 const onlineUsers = new Set();
@@ -256,6 +257,28 @@ function savePhotos() {
   fs.writeFileSync(photosFile, JSON.stringify(photos, null, 2));
 }
 
+async function loadPhotosFromSupabase() {
+  const { data, error } = await supabase.from('photos').select('*').order('date', { ascending: false });
+  if (error) throw error;
+  photos = (data || []).map(({ id, storage_path, ...photo }) => ({
+    ...photo,
+    _id: String(id),
+    url: storage_path ? supabase.storage.from(mediaBucket).getPublicUrl(storage_path).data.publicUrl : photo.url
+  }));
+}
+
+async function savePhotoToSupabase(photo, storagePath) {
+  const { data, error } = await supabase.from('photos').insert({
+    url: photo.url,
+    storage_path: storagePath,
+    caption: photo.caption,
+    uploader: photo.uploader,
+    date: photo.date
+  }).select().single();
+  if (error) throw error;
+  return { ...photo, _id: String(data.id) };
+}
+
 // --- Color pool management ---
 const defaultColors = [
   { name: 'Teal', hex: '#2a9d8f' },
@@ -282,6 +305,23 @@ if (fs.existsSync(colorsFile)) {
   fs.writeFileSync(colorsFile, JSON.stringify(availableColors, null, 2));
 }
 
+async function loadColorsFromSupabase() {
+  const { data, error } = await supabase.from('colors').select('*').order('name');
+  if (error) throw error;
+  if (Array.isArray(data) && data.length) {
+    availableColors = data.map(({ name, hex }) => ({ name, hex }));
+    saveColors();
+  }
+}
+
+async function saveColorsToSupabase() {
+  const { error: deleteError } = await supabase.from('colors').delete().neq('hex', '');
+  if (deleteError) throw deleteError;
+  if (!availableColors.length) return;
+  const { error } = await supabase.from('colors').insert(availableColors);
+  if (error) throw error;
+}
+
 function saveColors() {
   fs.writeFileSync(colorsFile, JSON.stringify(availableColors, null, 2));
 }
@@ -290,6 +330,7 @@ function reserveColor(hex) {
   if (idx !== -1) {
     availableColors.splice(idx, 1);
     saveColors();
+    saveColorsToSupabase().catch(error => console.error('Supabase colors save failed:', error.message));
     io.emit('available colors', availableColors);
     return true;
   }
@@ -300,6 +341,7 @@ function freeColor(hex, name = null) {
   if (!exists) {
     availableColors.push({ name: name || hex, hex });
     saveColors();
+    saveColorsToSupabase().catch(error => console.error('Supabase colors save failed:', error.message));
     io.emit('available colors', availableColors);
   }
 }
@@ -460,23 +502,37 @@ app.post('/times', async (req, res) => {
 
 // --- Photos API ---
 app.get('/photos', (req, res) => res.json(photos));
-app.post('/upload-photo', upload.single('photo'), (req, res) => {
+app.post('/upload-photo', upload.single('photo'), async (req, res) => {
   if (!req.file) return res.json({ success: false, message: 'No file uploaded' });
   
   const caption = req.body.caption || '';
   const uploader = req.body.uploader || 'Unknown';
-  const photoPath = '/uploads/' + req.file.filename;
+  const storagePath = `photos/${Date.now()}-${req.file.filename}`;
+  const photoUrl = supabase.storage.from(mediaBucket).getPublicUrl(storagePath).data.publicUrl;
   
   const newPhoto = {
     _id: Date.now().toString(),
-    url: photoPath,
+    url: photoUrl,
     caption: caption.substring(0, 200), // Limit caption length
     uploader: uploader,
     date: new Date().toISOString()
   };
   
-  photos.unshift(newPhoto); // Add to beginning (newest first)
-  savePhotos();
+  try {
+    const fileContents = fs.readFileSync(req.file.path);
+    const { error: uploadError } = await supabase.storage.from(mediaBucket).upload(storagePath, fileContents, {
+      contentType: req.file.mimetype,
+      upsert: false
+    });
+    if (uploadError) throw uploadError;
+    const savedPhoto = await savePhotoToSupabase(newPhoto, storagePath);
+    photos.unshift(savedPhoto);
+    savePhotos();
+    fs.unlinkSync(req.file.path);
+  } catch (error) {
+    try { fs.unlinkSync(req.file.path); } catch (cleanupError) { }
+    return res.json({ success: false, message: `Could not save photo: ${error.message}` });
+  }
   io.emit('photos updated');
   res.json({ success: true, photo: newPhoto });
 });
@@ -873,6 +929,18 @@ server.listen(PORT, async () => {
     console.log('Chat messages loaded from Supabase');
   } catch (error) {
     console.error('Supabase chat load failed; using local messages:', error.message);
+  }
+  try {
+    await loadPhotosFromSupabase();
+    console.log('Photos loaded from Supabase');
+  } catch (error) {
+    console.error('Supabase photos load failed; using local photos:', error.message);
+  }
+  try {
+    await loadColorsFromSupabase();
+    console.log('Colors loaded from Supabase');
+  } catch (error) {
+    console.error('Supabase colors load failed; using local colors:', error.message);
   }
   checkBirthdaysToday();
 });
