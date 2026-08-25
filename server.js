@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -5,6 +7,19 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const cors = require("cors"); 
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+supabase.from('users').select('nickname').limit(1)
+  .then(({ error }) => {
+    if (error) console.error('Supabase connection failed:', error.message);
+    else console.log('Supabase connected successfully');
+  })
+  .catch((error) => console.error('Supabase connection failed:', error.message));
 
 // --- App setup ---
 const app = express();
@@ -72,10 +87,56 @@ if (fs.existsSync(historyFile)) {
   } catch { messages = []; }
 }
 
+async function loadMessagesFromSupabase() {
+  const { data, error } = await supabase.from('chat_messages').select('*').order('created_at');
+  if (error) throw error;
+  messages = (data || []).map(({ id, created_at, ...message }) => ({ ...message, createdAt: created_at, _id: String(id) }));
+}
+
+async function saveMessageToSupabase(message) {
+  const { error } = await supabase.from('chat_messages').insert({
+    nickname: message.nickname || null,
+    text: message.text,
+    color: message.color || null,
+    system: Boolean(message.system)
+  });
+  if (error) throw error;
+}
+
 // --- Load users ---
 let users = {};
 if (fs.existsSync(usersFile)) {
   try { users = JSON.parse(fs.readFileSync(usersFile)); } catch { users = {}; }
+}
+
+function usersFromRows(rows) {
+  return Object.fromEntries(rows.map((user) => [user.nickname, {
+    password: user.password,
+    birthdate: user.birthdate,
+    color: user.color,
+    avatar: user.avatar || 'default.png',
+    admin: Boolean(user.admin),
+    avatarChanges: user.avatar_changes || 0
+  }]));
+}
+
+async function loadUsersFromSupabase() {
+  const { data, error } = await supabase.from('users').select('*');
+  if (error) throw error;
+  if (Array.isArray(data) && data.length) users = usersFromRows(data);
+}
+
+async function saveUserToSupabase(nickname, user) {
+  const { error } = await supabase.from('users').upsert({
+    nickname,
+    password: user.password,
+    birthdate: user.birthdate || null,
+    color: user.color,
+    avatar: user.avatar || 'default.png',
+    admin: Boolean(user.admin),
+    avatar_changes: user.avatarChanges || 0
+  });
+  if (error) throw error;
 }
 
 // Ensure there is at least one admin. If no admin exists, assign the first user.
@@ -96,6 +157,32 @@ if (fs.existsSync(invitesFile)) {
 
 function saveInvites() {
   fs.writeFileSync(invitesFile, JSON.stringify(invites, null, 2));
+}
+
+async function loadInvitesFromSupabase() {
+  const { data, error } = await supabase.from('invites').select('*');
+  if (error) throw error;
+  if (Array.isArray(data)) {
+    invites = Object.fromEntries(data.map((invite) => [invite.code, {
+      createdBy: invite.created_by,
+      createdAt: invite.created_at,
+      used: Boolean(invite.used),
+      ...(invite.used_by ? { usedBy: invite.used_by } : {}),
+      ...(invite.used_at ? { usedAt: invite.used_at } : {})
+    }]));
+  }
+}
+
+async function saveInviteToSupabase(code, invite) {
+  const { error } = await supabase.from('invites').upsert({
+    code,
+    created_by: invite.createdBy,
+    created_at: invite.createdAt,
+    used: Boolean(invite.used),
+    used_by: invite.usedBy || null,
+    used_at: invite.usedAt || null
+  });
+  if (error) throw error;
 }
 
 // --- Load events ---
@@ -123,6 +210,41 @@ if (fs.existsSync(timesFile)) {
 }
 function saveTimes() {
   fs.writeFileSync(timesFile, JSON.stringify(times, null, 2));
+}
+
+async function loadPlanningDataFromSupabase() {
+  const [eventResult, placeResult, timeResult] = await Promise.all([
+    supabase.from('events').select('*').order('id'),
+    supabase.from('places').select('*').order('id'),
+    supabase.from('times').select('*').order('id')
+  ]);
+  if (eventResult.error) throw eventResult.error;
+  if (placeResult.error) throw placeResult.error;
+  if (timeResult.error) throw timeResult.error;
+
+  events = (eventResult.data || []).map(({ id, ...event }) => ({ _id: String(id), ...event }));
+  places = (placeResult.data || []).map(({ id, ...place }) => ({ _id: String(id), ...place }));
+  times = (timeResult.data || []).map(({ id, ...time }) => ({ _id: String(id), ...time }));
+}
+
+async function saveEventToSupabase(event) {
+  const row = { ...event };
+  delete row._id;
+  const { data, error } = await supabase.from('events').insert(row).select().single();
+  if (error) throw error;
+  return { ...data, _id: String(data.id) };
+}
+
+async function savePlaceToSupabase(place) {
+  const { data, error } = await supabase.from('places').insert({ name: place.name, votes: place.votes || 0 }).select().single();
+  if (error) throw error;
+  return { ...data, _id: String(data.id) };
+}
+
+async function saveTimeToSupabase(time) {
+  const { data, error } = await supabase.from('times').insert({ time: time.time, nickname: time.nickname }).select().single();
+  if (error) throw error;
+  return { ...data, _id: String(data.id) };
 }
 
 // --- Load photos ---
@@ -216,7 +338,7 @@ app.get('/invites', (req, res) => {
 app.get('/birthdays', (req, res) => res.sendFile(path.join(__dirname, 'birthdays.html')));
 
 // --- Avatar upload ---
-app.post('/upload-avatar', upload.single('avatar'), (req, res) => {
+app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
   const nickname = req.body.nickname;
   if (!nickname || !req.file) return res.json({ success: false });
   const avatarPath = '/uploads/' + req.file.filename;
@@ -224,13 +346,18 @@ app.post('/upload-avatar', upload.single('avatar'), (req, res) => {
     users[nickname].avatar = avatarPath;
     // Track avatar changes for Chameleon achievement
     users[nickname].avatarChanges = (users[nickname].avatarChanges || 0) + 1;
-    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    try {
+      await saveUserToSupabase(nickname, users[nickname]);
+      fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    } catch (error) {
+      return res.json({ success: false, message: `Could not save avatar: ${error.message}` });
+    }
   }
   res.json({ success: true, url: avatarPath });
 });
 
 // --- Update account ---
-app.post('/update-account', (req, res) => {
+app.post('/update-account', async (req, res) => {
   const { oldNickname, currentPassword, newNickname, newColor, newPassword } = req.body;
   const user = users[oldNickname];
   if (!user || user.password !== currentPassword) return res.json({ success: false, message: 'Invalid credentials.' });
@@ -250,53 +377,83 @@ app.post('/update-account', (req, res) => {
   }
   if (newPassword) users[resultNick].password = newPassword;
 
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  try {
+    if (resultNick !== oldNickname) {
+      const { error: deleteError } = await supabase.from('users').delete().eq('nickname', oldNickname);
+      if (deleteError) throw deleteError;
+    }
+    await saveUserToSupabase(resultNick, users[resultNick]);
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  } catch (error) {
+    return res.json({ success: false, message: `Could not save account: ${error.message}` });
+  }
   io.emit('available colors', availableColors);
   res.json({ success: true, nickname: resultNick, color: users[resultNick].color });
 });
 
 // --- Events API ---
 app.get('/events', (req, res) => res.json(events));
-app.post('/events', (req, res) => {
+app.post('/events', async (req, res) => {
   const { title, date, time, creator, type, attendees } = req.body;
   if (!title || !date) return res.json({ success: false, message: "Missing fields" });
   const newEvent = { title, date, time, creator, type, attendees: attendees || [], reminder: false };
-  events.push(newEvent);
-  saveEvents();
+  try {
+    const savedEvent = await saveEventToSupabase(newEvent);
+    events.push(savedEvent);
+    saveEvents();
+  } catch (error) {
+    return res.json({ success: false, message: `Could not save event: ${error.message}` });
+  }
   io.emit('new event', newEvent);
   res.json({ success: true, event: newEvent });
 });
 
 // --- Places API ---
 app.get('/places', (req, res) => res.json(places));
-app.post('/places', (req, res) => {
+app.post('/places', async (req, res) => {
   const { name } = req.body;
   if (!name) return res.json({ success: false });
   const newPlace = { _id: Date.now().toString(), name, votes: 0 };
-  places.push(newPlace);
-  savePlaces();
+  try {
+    const savedPlace = await savePlaceToSupabase(newPlace);
+    places.push(savedPlace);
+    savePlaces();
+  } catch (error) {
+    return res.json({ success: false, message: `Could not save place: ${error.message}` });
+  }
   io.emit('places updated');
   res.json({ success: true, place: newPlace });
 });
 
-app.post('/places/:id/vote', (req, res) => {
+app.post('/places/:id/vote', async (req, res) => {
   const placeId = req.params.id;
   const place = places.find(p => p._id === placeId);
   if (!place) return res.json({ success: false });
   place.votes = (place.votes || 0) + 1;
-  savePlaces();
+  try {
+    const { error } = await supabase.from('places').update({ votes: place.votes }).eq('id', placeId);
+    if (error) throw error;
+    savePlaces();
+  } catch (error) {
+    return res.json({ success: false, message: `Could not save vote: ${error.message}` });
+  }
   io.emit('places updated');
   res.json({ success: true });
 });
 
 // --- Times API ---
 app.get('/times', (req, res) => res.json(times));
-app.post('/times', (req, res) => {
+app.post('/times', async (req, res) => {
   const { time, nickname } = req.body;
   if (!time || !nickname) return res.json({ success: false });
   const newTimeVote = { _id: Date.now().toString(), time, nickname };
-  times.push(newTimeVote);
-  saveTimes();
+  try {
+    const savedTime = await saveTimeToSupabase(newTimeVote);
+    times.push(savedTime);
+    saveTimes();
+  } catch (error) {
+    return res.json({ success: false, message: `Could not save time vote: ${error.message}` });
+  }
   io.emit('times updated');
   res.json({ success: true });
 });
@@ -471,7 +628,7 @@ io.on('connection', (socket) => {
   });
 
   // --- Signup ---
-  socket.on('signup', ({ nickname, password, birthdate, color, inviteCode }) => {
+  socket.on('signup', async ({ nickname, password, birthdate, color, inviteCode }) => {
     if (!inviteCode) return socket.emit('signup error', "Invite code is required.");
     const invite = invites[inviteCode];
     if (!invite || invite.used) return socket.emit('signup error', "Invalid or used invite code.");
@@ -484,6 +641,17 @@ io.on('connection', (socket) => {
     invites[inviteCode].usedBy = nickname;
     invites[inviteCode].usedAt = new Date().toISOString();
 
+    try {
+      await saveUserToSupabase(nickname, users[nickname]);
+      await saveInviteToSupabase(inviteCode, invites[inviteCode]);
+    } catch (error) {
+      delete users[nickname];
+      invites[inviteCode].used = false;
+      delete invites[inviteCode].usedBy;
+      delete invites[inviteCode].usedAt;
+      saveInvites();
+      return socket.emit('signup error', `Could not save account: ${error.message}`);
+    }
     fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
     saveInvites();
 
@@ -498,8 +666,12 @@ io.on('connection', (socket) => {
   });
 
   // --- Login ---
-  socket.on('login', ({ nickname, password }) => {
-    if (!users[nickname] || users[nickname].password !== password) return socket.emit('login error', "Invalid login.");
+  socket.on('login', async ({ nickname, password }) => {
+    const { data, error } = await supabase.from('users').select('*').eq('nickname', nickname).maybeSingle();
+    if (error) return socket.emit('login error', 'Unable to reach account database.');
+    if (!data || data.password !== password) return socket.emit('login error', "Invalid login.");
+
+    users[nickname] = usersFromRows([data])[nickname];
 
     socket.nickname = nickname;
     socket.isLoggedIn = true;
@@ -511,7 +683,7 @@ io.on('connection', (socket) => {
   });
 
   // --- Admin invite actions ---
-  socket.on('generate invite', () => {
+  socket.on('generate invite', async () => {
     const creator = socket.nickname;
     if (!creator || !users[creator]?.admin) return socket.emit('invite error', 'Unauthorized.');
 
@@ -521,36 +693,65 @@ io.on('connection', (socket) => {
       createdAt: new Date().toISOString(),
       used: false
     };
-    saveInvites();
+    try {
+      await saveInviteToSupabase(code, invites[code]);
+      saveInvites();
+    } catch (error) {
+      delete invites[code];
+      return socket.emit('invite error', `Could not save invite: ${error.message}`);
+    }
 
     socket.emit('invite generated', { code, url: `/?invite=${code}` });
     io.emit('invites updated');
   });
 
-  socket.on('get invites', () => {
+  socket.on('get invites', async () => {
     const requester = socket.nickname;
     if (!requester || !users[requester]?.admin) return socket.emit('invite error', 'Unauthorized.');
-    socket.emit('invites list', Object.entries(invites).map(([code, info]) => ({ code, ...info })));
+    try {
+      const { data, error } = await supabase.from('invites').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      socket.emit('invites list', data.map((invite) => ({
+        code: invite.code,
+        createdBy: invite.created_by,
+        createdAt: invite.created_at,
+        used: Boolean(invite.used),
+        usedBy: invite.used_by,
+        usedAt: invite.used_at
+      })));
+    } catch (error) {
+      socket.emit('invite error', `Could not load invites: ${error.message}`);
+    }
   });
 
-  socket.on('set admin', (targetNickname) => {
+  socket.on('set admin', async (targetNickname) => {
     const requester = socket.nickname;
     if (!requester || !users[requester]?.admin) return socket.emit('admin error', 'Unauthorized.');
     if (!targetNickname || !users[targetNickname]) return socket.emit('admin error', 'User not found.');
 
     Object.keys(users).forEach((name) => { users[name].admin = false; });
     users[targetNickname].admin = true;
-    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    try {
+      await Promise.all(Object.entries(users).map(([name, user]) => saveUserToSupabase(name, user)));
+      fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    } catch (error) {
+      return socket.emit('admin error', `Could not save admin change: ${error.message}`);
+    }
 
     socket.emit('admin updated', targetNickname);
     io.emit('admin changed', targetNickname);
   });
 
   // --- Chat messages ---
-  socket.on('chat message', (msg) => {
+  socket.on('chat message', async (msg) => {
     const sender = socket.nickname || msg.nickname || "Unknown";
     const userColor = users[sender]?.color || '#ffffff';
     const fullMsg = { nickname: sender, text: msg.text, color: userColor, system: false };
+    try {
+      await saveMessageToSupabase(fullMsg);
+    } catch (error) {
+      return socket.emit('chat error', `Could not save message: ${error.message}`);
+    }
     messages.push(fullMsg);
     fs.writeFileSync(historyFile, JSON.stringify(messages, null, 2));
     io.emit('chat message', fullMsg);
@@ -574,18 +775,20 @@ io.on('connection', (socket) => {
   });
 
   // --- Chat page join/leave ---
-  socket.on('join chat', ({ nickname }) => {
+  socket.on('join chat', async ({ nickname }) => {
     if (users[nickname]) {
       const joinMsg = { text: `${nickname} joined the chat`, system: true };
+      try { await saveMessageToSupabase(joinMsg); } catch (error) { return socket.emit('chat error', `Could not save message: ${error.message}`); }
       messages.push(joinMsg);
       fs.writeFileSync(historyFile, JSON.stringify(messages, null, 2));
       io.emit('chat message', joinMsg);
     }
   });
 
-  socket.on('leave chat', ({ nickname }) => {
+  socket.on('leave chat', async ({ nickname }) => {
     if (users[nickname]) {
       const leaveMsg = { text: `${nickname} left the chat`, system: true };
+      try { await saveMessageToSupabase(leaveMsg); } catch (error) { return socket.emit('chat error', `Could not save message: ${error.message}`); }
       messages.push(leaveMsg);
       fs.writeFileSync(historyFile, JSON.stringify(messages, null, 2));
       io.emit('chat message', leaveMsg);
@@ -602,16 +805,22 @@ io.on('connection', (socket) => {
   });
 
   // --- Event deletion / update ---
-  socket.on('delete event', (eventIndex) => {
+  socket.on('delete event', async (eventIndex) => {
     if (typeof eventIndex === 'number' && events[eventIndex]) {
       const removed = events.splice(eventIndex, 1)[0];
+      const { error } = await supabase.from('events').delete().eq('id', removed._id);
+      if (error) return socket.emit('event error', `Could not delete event: ${error.message}`);
       saveEvents();
       io.emit('event deleted', { index: eventIndex, event: removed });
     }
   });
-  socket.on('update event', ({ index, updated }) => {
+  socket.on('update event', async ({ index, updated }) => {
     if (typeof index === 'number' && events[index]) {
       events[index] = { ...events[index], ...updated };
+      const event = { ...events[index] };
+      delete event._id;
+      const { error } = await supabase.from('events').update(event).eq('id', events[index]._id);
+      if (error) return socket.emit('event error', `Could not update event: ${error.message}`);
       saveEvents();
       io.emit('event updated', { index, event: events[index] });
     }
@@ -639,7 +848,31 @@ function checkBirthdaysToday() {
   });
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Gradsquad server running on http://localhost:${PORT}`);
+  try {
+    await loadUsersFromSupabase();
+    console.log('Users loaded from Supabase');
+  } catch (error) {
+    console.error('Supabase users load failed; using local users:', error.message);
+  }
+  try {
+    await loadInvitesFromSupabase();
+    console.log('Invites loaded from Supabase');
+  } catch (error) {
+    console.error('Supabase invites load failed; using local invites:', error.message);
+  }
+  try {
+    await loadPlanningDataFromSupabase();
+    console.log('Events and planning data loaded from Supabase');
+  } catch (error) {
+    console.error('Supabase planning data load failed; using local data:', error.message);
+  }
+  try {
+    await loadMessagesFromSupabase();
+    console.log('Chat messages loaded from Supabase');
+  } catch (error) {
+    console.error('Supabase chat load failed; using local messages:', error.message);
+  }
   checkBirthdaysToday();
 });
