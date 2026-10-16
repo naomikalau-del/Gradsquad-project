@@ -929,22 +929,53 @@ io.on('connection', (socket) => {
 // --- Start server ---
 const PORT = process.env.PORT || 3000;
 
-function checkBirthdaysToday() {
+function localDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+async function checkBirthdaysToday() {
   const today = new Date();
   const todayMonth = today.getMonth();
   const todayDay = today.getDate();
+  const todayKey = localDateKey(today);
 
-  Object.entries(users).forEach(([name, user]) => {
-    if (!user.birthdate) return;
+  for (const [name, user] of Object.entries(users)) {
+    if (!user.birthdate) continue;
 
     const birth = new Date(user.birthdate);
-    if (birth.getMonth() === todayMonth && birth.getDate() === todayDay) {
-      const message = { text: `🎉 Today is ${name}'s birthday! 🎂`, system: true };
-      messages.push(message);
-      fs.writeFileSync(historyFile, JSON.stringify(messages, null, 2));
-      io.emit('chat message', message);
+    if (birth.getMonth() !== todayMonth || birth.getDate() !== todayDay) continue;
+
+    const text = `🎉 Today is ${name}'s birthday! 🎂`;
+    const alreadyAnnouncedToday = messages.some((message) => {
+      if (message.text !== text) return false;
+      const timestamp = message.createdAt || message.created_at;
+      return timestamp && localDateKey(new Date(timestamp)) === todayKey;
+    });
+    if (alreadyAnnouncedToday) continue;
+
+    const message = { text, system: true };
+    try {
+      await saveMessageToSupabase(message);
+      const savedMessage = { ...message, createdAt: new Date().toISOString() };
+      messages.push(savedMessage);
+      io.emit('chat message', savedMessage);
+    } catch (error) {
+      console.error(`Could not save birthday announcement for ${name}:`, error.message);
     }
-  });
+  }
+}
+
+function scheduleNextBirthdayCheck() {
+  const nextCheck = new Date();
+  nextCheck.setHours(24, 0, 0, 0);
+  const timer = setTimeout(async () => {
+    await checkBirthdaysToday();
+    scheduleNextBirthdayCheck();
+  }, nextCheck.getTime() - Date.now());
+  timer.unref();
 }
 
 server.listen(PORT, async () => {
@@ -985,5 +1016,6 @@ server.listen(PORT, async () => {
   } catch (error) {
     console.error('Supabase colors load failed; using local colors:', error.message);
   } 
-  checkBirthdaysToday();
+  await checkBirthdaysToday();
+  scheduleNextBirthdayCheck();
 });
