@@ -407,20 +407,38 @@ app.get('/birthdays', (req, res) => res.sendFile(path.join(__dirname, 'birthdays
 // --- Avatar upload ---
 app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
   const nickname = req.body.nickname;
-  if (!nickname || !req.file) return res.json({ success: false });
-  const avatarPath = '/uploads/' + req.file.filename;
-  if (users[nickname]) {
-    users[nickname].avatar = avatarPath;
-    // Track avatar changes for Chameleon achievement
-    users[nickname].avatarChanges = (users[nickname].avatarChanges || 0) + 1;
-    try {
-      await saveUserToSupabase(nickname, users[nickname]);
-      fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-    } catch (error) {
-      return res.json({ success: false, message: `Could not save avatar: ${error.message}` });
-    }
+  if (!nickname || !req.file) return res.status(400).json({ success: false, message: 'Choose an image and try again.' });
+  if (!users[nickname]) {
+    fs.unlink(req.file.path, () => {});
+    return res.status(404).json({ success: false, message: 'Account not found.' });
   }
-  res.json({ success: true, url: avatarPath });
+
+  const storagePath = `avatars/${Date.now()}-${req.file.filename}`;
+  const previousAvatar = users[nickname].avatar;
+  const previousAvatarChanges = users[nickname].avatarChanges || 0;
+
+  try {
+    const fileContents = fs.readFileSync(req.file.path);
+    const { error: uploadError } = await supabase.storage.from(mediaBucket).upload(storagePath, fileContents, {
+      contentType: req.file.mimetype,
+      upsert: false
+    });
+    if (uploadError) throw uploadError;
+
+    const avatarUrl = supabase.storage.from(mediaBucket).getPublicUrl(storagePath).data.publicUrl;
+    users[nickname].avatar = avatarUrl;
+    users[nickname].avatarChanges = previousAvatarChanges + 1;
+    await saveUserToSupabase(nickname, users[nickname]);
+    res.json({ success: true, url: avatarUrl });
+  } catch (error) {
+    users[nickname].avatar = previousAvatar;
+    users[nickname].avatarChanges = previousAvatarChanges;
+    await supabase.storage.from(mediaBucket).remove([storagePath]).catch(() => {});
+    console.error('Avatar upload failed:', error.message);
+    res.status(500).json({ success: false, message: `Could not save avatar: ${error.message}` });
+  } finally {
+    fs.unlink(req.file.path, () => {});
+  }
 });
 
 // --- Update account ---

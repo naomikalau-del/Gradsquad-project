@@ -311,6 +311,21 @@
         document.getElementById('avatar').src = savedAvatar;
       }
 
+      // Supabase is authoritative; replace stale local or ephemeral /uploads URLs.
+      fetch(`${API_BASE_URL}/users`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Could not load saved profile');
+          return res.json();
+        })
+        .then((allUsers) => {
+          const currentUser = allUsers[nickname];
+          if (currentUser?.avatar) {
+            document.getElementById('avatar').src = currentUser.avatar;
+            localStorage.setItem('avatar', currentUser.avatar);
+          }
+        })
+        .catch((err) => console.error('Could not refresh saved avatar:', err));
+
       // Handle avatar upload
       document.getElementById('avatarUpload').addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -329,7 +344,7 @@
             localStorage.setItem('avatar', data.url);
             loadAchievements(); // Refresh achievements
           } else {
-            alert("Upload failed!");
+            alert(data.message || 'Upload failed!');
           }
         } catch (err) {
           console.error("Upload error:", err);
