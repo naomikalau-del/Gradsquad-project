@@ -30,8 +30,8 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://gradsquad-project.onrender.com"
-  ],
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -45,8 +45,8 @@ const io = new Server(server, {
     origin: [
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-      "https://gradsquad-project.onrender.com"
-    ],
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -130,7 +130,7 @@ function publicUser(nickname, user) {
 async function loadUsersFromSupabase() {
   const { data, error } = await supabase.from('users').select('*');
   if (error) throw error;
-  if (Array.isArray(data) && data.length) users = usersFromRows(data);
+  if (Array.isArray(data)) users = usersFromRows(data);
 
   for (const [nickname, user] of Object.entries(users)) {
     if (!user.password.startsWith('$2')) {
@@ -370,7 +370,17 @@ app.get('/planning', (req, res) => res.sendFile(path.join(__dirname, 'planning.h
 app.get('/photoalbum', (req, res) => res.sendFile(path.join(__dirname, 'photoalbum.html')));
 app.get('/achievements', (req, res) => res.sendFile(path.join(__dirname, 'achievements.html')));
 app.get('/users', (req, res) => {
-  res.json(Object.fromEntries(Object.entries(users).map(([nickname, user]) => [nickname, publicUser(nickname, user)])));
+  loadUsersFromSupabase()
+    .then(() => {
+      for (const nickname of onlineUsers) {
+        if (!users[nickname]) onlineUsers.delete(nickname);
+      }
+      res.json(Object.fromEntries(Object.entries(users).map(([nickname, user]) => [nickname, publicUser(nickname, user)])));
+    })
+    .catch((error) => {
+      console.error('Could not refresh users from Supabase:', error.message);
+      res.status(503).json({ message: 'Could not load accounts from Supabase.' });
+    });
 });
 app.get('/online-users', (req, res) => {
   const onlineList = Array.from(onlineUsers).map(nickname => ({ nickname }));
@@ -956,6 +966,6 @@ server.listen(PORT, async () => {
     console.log('Colors loaded from Supabase');
   } catch (error) {
     console.error('Supabase colors load failed; using local colors:', error.message);
-  }
+  } 
   checkBirthdaysToday();
 });

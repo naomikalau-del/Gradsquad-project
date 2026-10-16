@@ -3,7 +3,7 @@
 
 window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
   ? 'http://localhost:3000'
-  : 'https://gradsquad-project.onrender.com';
+  : window.location.origin;
 
 // Load socket.io client synchronously during initial page load. This avoids io undefined errors
 // in pages that assume it is available immediately after script tags.

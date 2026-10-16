@@ -131,6 +131,21 @@
       margin-top: 4px;
     }
 
+    .selected-photo-preview {
+      display: none;
+      max-width: 180px;
+      max-height: 180px;
+      margin-top: 12px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .upload-status {
+      min-height: 1.25em;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
     .upload-btn {
       background: var(--accent);
       color: #fff;
@@ -303,10 +318,12 @@
             <label for="photoInput" class="file-input-label">Choose Photo</label>
             <input type="file" id="photoInput" accept="image/*" required>
             <div class="file-name" id="fileName">No file selected</div>
+            <img id="selectedPhotoPreview" class="selected-photo-preview" alt="Selected photo preview">
           </div>
         </div>
         <textarea id="captionInput" placeholder="Add a caption (optional)" rows="2" style="resize: vertical;"></textarea>
         <button type="submit" class="upload-btn" id="uploadBtn">Upload Photo</button>
+        <div id="uploadStatus" class="upload-status" role="status" aria-live="polite"></div>
       </form>
     </div>
 
@@ -330,15 +347,24 @@
   <script src="sidebar.js"></script>
   <script>
     // API_BASE_URL is global from appConfig.js
-    const socket = io(API_BASE_URL);
+    const socket = window.io ? window.io(API_BASE_URL) : null;
     const nickname = localStorage.getItem('nickname');
     
     loadSidebar(true);
 
     // File input display
     document.getElementById('photoInput').addEventListener('change', (e) => {
-      const fileName = e.target.files[0]?.name || 'No file selected';
-      document.getElementById('fileName').textContent = fileName;
+      const file = e.target.files[0];
+      const preview = document.getElementById('selectedPhotoPreview');
+      document.getElementById('fileName').textContent = file?.name || 'No file selected';
+      document.getElementById('uploadStatus').textContent = '';
+      if (file && file.type.startsWith('image/')) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+      } else {
+        preview.removeAttribute('src');
+        preview.style.display = 'none';
+      }
     });
 
     // Load photos
@@ -401,7 +427,7 @@
       const file = fileInput.files[0];
 
       if (!file) {
-        alert('Please select a photo');
+        document.getElementById('uploadStatus').textContent = 'Please select a photo first.';
         return;
       }
 
@@ -412,6 +438,7 @@
 
       try {
         document.getElementById('uploadBtn').disabled = true;
+        document.getElementById('uploadStatus').textContent = 'Uploading photo…';
         const res = await fetch(`${API_BASE_URL}/upload-photo`, {
           method: 'POST',
           body: formData
@@ -422,21 +449,24 @@
           fileInput.value = '';
           document.getElementById('captionInput').value = '';
           document.getElementById('fileName').textContent = 'No file selected';
+          document.getElementById('selectedPhotoPreview').removeAttribute('src');
+          document.getElementById('selectedPhotoPreview').style.display = 'none';
+          document.getElementById('uploadStatus').textContent = 'Photo uploaded.';
           loadPhotos();
-          socket.emit('photo uploaded');
+          socket?.emit('photo uploaded');
         } else {
-          alert(data.message || 'Failed to upload photo');
+          document.getElementById('uploadStatus').textContent = data.message || 'Failed to upload photo.';
         }
       } catch (err) {
         console.error("Upload failed:", err);
-        alert('Upload failed');
+        document.getElementById('uploadStatus').textContent = `Upload failed: ${err.message}`;
       } finally {
         document.getElementById('uploadBtn').disabled = false;
       }
     });
 
     // Socket listeners
-    socket.on('photo uploaded', () => loadPhotos());
+    socket?.on('photo uploaded', () => loadPhotos());
 
     // Close modal on background click
     document.getElementById('modal').addEventListener('click', (e) => {
