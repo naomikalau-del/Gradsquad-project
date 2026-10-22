@@ -391,7 +391,6 @@ main.container,
 .event-title,
 .photo-caption,
 .info-value,
-.message-sender,
 .message-text {
   color: var(--text) !important;
 }
